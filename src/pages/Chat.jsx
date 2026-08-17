@@ -1,25 +1,20 @@
-// src/pages/Chat.jsx - Chats List (Private + Groups)
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
 import { getUserChats } from "../services/chatService";
-import { getUserGroups } from "../services/groupService";
 import { searchUserByUsername } from "../services/authService";
 import { getOrCreatePrivateChat } from "../services/chatService";
 import { doc, getDoc } from "firebase/firestore";
 import toast from "react-hot-toast";
 import {
   FiSearch,
-  FiMessageCircle,
   FiHome,
   FiImage,
   FiUser,
   FiSettings,
   FiLogOut,
-  FiPlus,
-  FiUsers,
-  FiArrowLeft
-} from "react-icons/fi";
+  FiPlus
+} from "react-icons/fi"; // Removed FiMessageCircle
 import "../styles/home.css";
 
 function Chats() {

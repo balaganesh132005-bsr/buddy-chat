@@ -1,4 +1,5 @@
 // src/services/authService.js
+// src/services/authService.js
 import {
   signInWithPopup,
   signOut,
@@ -9,13 +10,8 @@ import {
   getDoc,
   setDoc,
   updateDoc,
-  deleteDoc,
-  collection,
-  query,
-  where,
-  getDocs,
-  limit
-} from "firebase/firestore";
+  deleteDoc
+} from "firebase/firestore"; // Removed collection, query, where, getDocs, limit
 import { auth, db, googleProvider } from "../config/firebase";
 
 // Sign in with Google

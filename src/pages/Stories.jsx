@@ -87,7 +87,7 @@ function Stories() {
   }, [currentStoryIndex, stories.length, startProgressTimer]); // ✅ Added startProgressTimer here!
 
   // --- 4. UseEffect that starts the viewer ---
-
+  // ✅ Fixed dependency
   useEffect(() => {
     if (viewerOpen) {
       startProgressTimer();
@@ -95,7 +95,7 @@ function Stories() {
     return () => {
       clearTimeout(progressTimerRef.current);
     };
-  }, [viewerOpen, currentStoryIndex, startProgressTimer]);
+  }, [viewerOpen, startProgressTimer]); // Removed currentStoryIndex
 
   const loadStories = async () => {
     try {
