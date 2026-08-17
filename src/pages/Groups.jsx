@@ -1,4 +1,4 @@
-// src/pages/Groups.jsx
+// src/pages/Groups.jsx - Clean Layout with Proper CSS
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -143,12 +143,12 @@ function Groups() {
   };
 
   if (loading) {
-    return <div className="groups-loading">Loading groups...</div>;
+    return <div className="loading">Loading groups...</div>;
   }
 
   return (
     <div className="groups-page-container">
-      {/* Sidebar - Consistent with Home/Chats */}
+      {/* Sidebar */}
       <div className="sidebar">
         <div className="sidebar-header">
           <h1>BuddyChat</h1>
@@ -196,7 +196,6 @@ function Groups() {
       <div className="main-content-groups">
         <div className="groups-header">
           <div className="groups-title-area">
-            {/* ✅ BACK BUTTON ADDED HERE */}
             <button onClick={() => navigate("/")} className="back-btn-groups">
               <FiArrowLeft size={20} />
             </button>
@@ -210,6 +209,7 @@ function Groups() {
           </button>
         </div>
 
+        {/* Create Group Form - Only visible when New Group clicked */}
         {showCreate && (
           <div className="create-group-form">
             <div className="form-group">
