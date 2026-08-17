@@ -1,4 +1,4 @@
-// src/pages/Chats.jsx - Mobile Responsive Fix
+// src/pages/Chats.jsx - Mobile Responsive Fix (CSS Classes Fixed)
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
