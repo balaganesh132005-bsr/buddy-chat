@@ -1,4 +1,4 @@
-// src/pages/Home.jsx - Close Friends Modal + Auto Upload Progress
+// src/pages/Home.jsx - Own Story in You circle, Others in separate circles
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -50,13 +50,12 @@ function Home() {
 
         const activeStories = await getActiveStories(currentUser.uid);
         const sortedStories = activeStories.sort((a, b) => {
-          const aSeen = a.viewers?.includes(currentUser.uid) || a.ownerId === currentUser.uid;
-          const bSeen = b.viewers?.includes(currentUser.uid) || b.ownerId === currentUser.uid;
+          const aSeen = a.viewers?.includes(currentUser.uid);
+          const bSeen = b.viewers?.includes(currentUser.uid);
           return aSeen - bSeen;
         });
         setStories(sortedStories);
 
-        // Load friends for Close Friends
         const userChats = await getUserChats(currentUser.uid);
         const friendsList = userChats.map(chat => chat.otherUser).filter(user => user);
         setFriends(friendsList);
@@ -70,8 +69,6 @@ function Home() {
 
     fetchHomeData();
   }, []);
-
-  // --- Upload Modal Logic ---
 
   const handleProfileClick = () => {
     setShowUploadModal(true);
@@ -102,7 +99,6 @@ function Home() {
       setUploadingStory(true);
       setUploadProgress(0);
       
-      // Simulate progress
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
           if (prev >= 90) {
@@ -151,8 +147,8 @@ function Home() {
       if (!currentUser) return;
       const activeStories = await getActiveStories(currentUser.uid);
       const sortedStories = activeStories.sort((a, b) => {
-        const aSeen = a.viewers?.includes(currentUser.uid) || a.ownerId === currentUser.uid;
-        const bSeen = b.viewers?.includes(currentUser.uid) || b.ownerId === currentUser.uid;
+        const aSeen = a.viewers?.includes(currentUser.uid);
+        const bSeen = b.viewers?.includes(currentUser.uid);
         return aSeen - bSeen;
       });
       setStories(sortedStories);
@@ -232,7 +228,7 @@ function Home() {
           </div>
           <div className="stories-horizontal">
             
-            {/* Own Profile Circle */}
+            {/* ONLY OWN PROFILE CIRCLE (Always shows your profile + plus icon) */}
             <div className="story-circle own-story" onClick={handleProfileClick}>
               <div className="story-circle-border">
                 <img
@@ -247,12 +243,12 @@ function Home() {
             
             <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" style={{ display: 'none' }} />
 
-            {/* Friends Stories */}
-            {stories.length === 0 ? (
-              <p className="no-stories-home">No stories.</p>
+            {/* FRIENDS STORIES (Excluding own stories) */}
+            {stories.filter(story => story.ownerId !== auth.currentUser.uid).length === 0 ? (
+              <p className="no-stories-home">No friends' stories.</p>
             ) : (
-              stories.map((story, index) => {
-                const isSeen = story.viewers?.includes(auth.currentUser.uid) || story.ownerId === auth.currentUser.uid;
+              stories.filter(story => story.ownerId !== auth.currentUser.uid).map((story, index) => {
+                const isSeen = story.viewers?.includes(auth.currentUser.uid);
                 return (
                   <div
                     key={story.id}
@@ -277,27 +273,21 @@ function Home() {
         </div>
       </div>
 
-      {/* ===== CLOSE FRIENDS UPLOAD MODAL ===== */}
+      {/* CLOSE FRIENDS UPLOAD MODAL */}
       {showUploadModal && (
         <div className="upload-modal-overlay" onClick={() => setShowUploadModal(false)}>
           <div className="upload-modal-content" onClick={(e) => e.stopPropagation()}>
-            
             <div className="upload-modal-header">
               <h3>Add to Story</h3>
               <button onClick={() => setShowUploadModal(false)} className="close-modal-btn"><FiX size={24} /></button>
             </div>
-
             <div className="upload-modal-body">
-              
-              {/* Step 1: Select Photo */}
               {!uploadedFile && !uploadingStory && (
                 <div className="upload-option" onClick={() => fileInputRef.current?.click()}>
                   <div className="upload-option-icon">📸</div>
                   <p>Tap to select a photo</p>
                 </div>
               )}
-
-              {/* Step 2: Show Selected Photo + Close Friends */}
               {uploadedFile && !uploadingStory && (
                 <div className="upload-preview-section">
                   <img src={URL.createObjectURL(uploadedFile)} alt="Preview" className="upload-preview-img" />
@@ -328,8 +318,6 @@ function Home() {
                   </div>
                 </div>
               )}
-
-              {/* Step 3: Progress Bar */}
               {uploadingStory && (
                 <div className="upload-progress-modal">
                   <div className="upload-progress-bar">
@@ -338,18 +326,11 @@ function Home() {
                   <p className="progress-text">Posting story... {uploadProgress}%</p>
                 </div>
               )}
-
-              {/* Step 4: Post Button */}
               {uploadedFile && !uploadingStory && (
-                <button 
-                  onClick={handleUpload} 
-                  className="upload-post-btn"
-                  disabled={uploadingStory || selectedFriends.length === 0}
-                >
+                <button onClick={handleUpload} className="upload-post-btn" disabled={uploadingStory || selectedFriends.length === 0}>
                   Post Story
                 </button>
               )}
-
             </div>
           </div>
         </div>
