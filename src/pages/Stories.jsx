@@ -1,7 +1,7 @@
-// src/pages/Stories.jsx - Beautiful Mobile Layout
+// src/pages/Stories.jsx - Plus Button + Viewers + Privacy
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../config/firebase";
+import { auth, db } from "../config/firebase";
 import { 
   getActiveStories, 
   createStory, 
@@ -11,7 +11,7 @@ import {
 } from "../services/storyService";
 import { uploadStoryMedia } from "../services/storageService";
 import toast from "react-hot-toast";
-import { FiPlus, FiX, FiEye, FiArrowLeft, FiTrash2, FiUsers, FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { FiPlus, FiX, FiEye, FiArrowLeft, FiTrash2, FiUsers, FiChevronLeft, FiChevronRight, FiLock, FiGlobe } from "react-icons/fi";
 import "../styles/stories.css";
 
 function Stories() {
@@ -19,12 +19,16 @@ function Stories() {
   const [stories, setStories] = useState([]);
   const [showUpload, setShowUpload] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [privacy, setPrivacy] = useState("public"); // public or private
+  
+  // Viewer state
   const [viewerOpen, setViewerOpen] = useState(false);
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [viewers, setViewers] = useState([]);
   const [showViewers, setShowViewers] = useState(false);
   const [loadingViewers, setLoadingViewers] = useState(false);
   const [progress, setProgress] = useState(0);
+  
   const fileInputRef = useRef(null);
   const progressTimerRef = useRef(null);
 
@@ -34,7 +38,7 @@ function Stories() {
 
   const loadStories = async () => {
     try {
-      const activeStories = await getActiveStories();
+      const activeStories = await getActiveStories(auth.currentUser.uid);
       setStories(activeStories);
     } catch (error) {
       toast.error("Failed to load stories");
@@ -47,7 +51,11 @@ function Stories() {
     try {
       setUploading(true);
       const mediaURL = await uploadStoryMedia(auth.currentUser.uid, file, "photo");
-      await createStory(auth.currentUser.uid, { mediaURL, mediaType: "photo" });
+      await createStory(auth.currentUser.uid, {
+        mediaURL,
+        mediaType: "photo",
+        privacy: privacy
+      });
       toast.success("Story posted!");
       setShowUpload(false);
       loadStories();
@@ -160,13 +168,17 @@ function Stories() {
         </button>
       </div>
 
-      {/* Modern Upload Section */}
+      {/* Upload Section with Privacy Toggle */}
       {showUpload && (
         <div className="upload-section-modern">
+          <div className="upload-privacy">
+            <label>Privacy:</label>
+            <button onClick={() => setPrivacy("public")} className={`privacy-btn ${privacy === "public" ? "active" : ""}`}><FiGlobe /> Public</button>
+            <button onClick={() => setPrivacy("private")} className={`privacy-btn ${privacy === "private" ? "active" : ""}`}><FiLock /> Private</button>
+          </div>
           <div className="upload-drop-area" onClick={() => fileInputRef.current?.click()}>
             <div className="upload-icon">📸</div>
             <p>Tap to select a photo</p>
-            <span className="upload-sub">or drag & drop here</span>
           </div>
           <input type="file" ref={fileInputRef} onChange={handleStoryUpload} accept="image/*" hidden />
           {uploading && <div className="upload-progress"><div className="progress-bar"></div></div>}
@@ -221,11 +233,17 @@ function Stories() {
                 </div>
               </div>
               <div className="story-viewer-actions">
+                {/* Viewers button - ONLY OWNER */}
                 {stories[currentStoryIndex].ownerId === auth.currentUser.uid && (
-                  <>
-                    <button onClick={(e) => handleShowViewers(stories[currentStoryIndex].id, e)} className="story-viewer-btn viewers-btn"><FiUsers size={18} /></button>
-                    <button onClick={(e) => handleDeleteStory(stories[currentStoryIndex].id, e)} className="story-viewer-btn delete-btn"><FiTrash2 size={18} /></button>
-                  </>
+                  <button onClick={(e) => handleShowViewers(stories[currentStoryIndex].id, e)} className="story-viewer-btn viewers-btn">
+                    <FiUsers size={18} />
+                  </button>
+                )}
+                {/* Delete button - ONLY OWNER */}
+                {stories[currentStoryIndex].ownerId === auth.currentUser.uid && (
+                  <button onClick={(e) => handleDeleteStory(stories[currentStoryIndex].id, e)} className="story-viewer-btn delete-btn">
+                    <FiTrash2 size={18} />
+                  </button>
                 )}
                 <button onClick={closeViewer} className="story-viewer-btn close-btn"><FiX size={24} /></button>
               </div>
@@ -250,13 +268,23 @@ function Stories() {
                 <div className="story-overlay">
                   <img src={story.owner.photoURL || "https://via.placeholder.com/30"} alt={story.owner.username} className="story-avatar" />
                   <p className="story-name">@{story.owner.username}</p>
-                  <p className="story-display-name">{story.owner.displayName || story.owner.username}</p>
-                  <div className="story-views"><FiEye size={14} /> {story.viewCount || 0}</div>
+                  {/* Views - ONLY OWNER sees count */}
+                  {isOwnStory && (
+                    <div className="story-views"><FiEye size={14} /> {story.viewCount || 0}</div>
+                  )}
+                  {!isOwnStory && (
+                    <div className="story-views"><FiEye size={14} /> </div>
+                  )}
                 </div>
+                {/* Plus button on own stories */}
                 {isOwnStory && (
                   <div className="story-actions">
-                    <button onClick={(e) => handleShowViewers(story.id, e)} className="viewers-btn"><FiUsers size={16} /></button>
-                    <button onClick={(e) => handleDeleteStory(story.id, e)} className="delete-story-btn"><FiTrash2 size={16} /></button>
+                    <button onClick={() => setShowUpload(true)} className="add-story-btn">
+                      <FiPlus size={16} />
+                    </button>
+                    <button onClick={(e) => handleDeleteStory(story.id, e)} className="delete-story-btn">
+                      <FiTrash2 size={16} />
+                    </button>
                   </div>
                 )}
               </div>
