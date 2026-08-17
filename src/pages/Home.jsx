@@ -1,4 +1,4 @@
-// src/pages/Home.jsx - Instagram Style Mobile (FORCE FIX)
+// src/pages/Home.jsx - Instagram Style Mobile
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -62,7 +62,7 @@ function Home() {
 
   return (
     <div className="home-container">
-      {/* Mobile Top Bar - Instagram Style */}
+      {/* Mobile Top Bar */}
       <div className="mobile-top-bar">
         <div className="mobile-brand">
           <h1>BuddyChat</h1>
