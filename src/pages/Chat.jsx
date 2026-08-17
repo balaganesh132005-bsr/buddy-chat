@@ -1,4 +1,4 @@
-// src/pages/Chats.jsx - Clean Desktop/Mobile Layout
+// src/pages/Chats.jsx - Fixed CSS Classes
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -18,7 +18,7 @@ import {
   FiSettings,
   FiLogOut
 } from "react-icons/fi";
-import "../styles/home.css"; // Reusing home.css for sidebar
+import "../styles/home.css";
 
 function Chats() {
   const navigate = useNavigate();
@@ -149,24 +149,22 @@ function Chats() {
       </div>
 
       {/* MAIN CONTENT */}
-      <div className="main-content-mobile">
-        <div className="content-header">
+      <div className="main-content-mobile chats-layout">
+        <div className="chats-header">
           <h2>Chats</h2>
-          <button onClick={() => navigate("/groups")} className="create-btn">
+          <button onClick={() => navigate("/groups")} className="chats-create-btn">
             <FiPlus size={20} /> New Group
           </button>
         </div>
 
-        <div className="search-section">
-          <div className="search-box">
-            <FiSearch size={20} />
-            <input
-              type="text"
-              placeholder="Search username..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-            />
-          </div>
+        <div className="chats-search-box">
+          <FiSearch size={20} />
+          <input
+            type="text"
+            placeholder="Search username..."
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+          />
           {searchResults.length > 0 && (
             <div className="search-results">
               {searchResults.map((result) => (
@@ -184,9 +182,9 @@ function Chats() {
         </div>
 
         {groups.length > 0 && (
-          <div className="groups-section-chats">
-            <h3 className="section-label">Groups</h3>
-            <div className="groups-chats-list">
+          <div className="chats-section">
+            <h3 className="chats-section-title">Groups</h3>
+            <div className="chats-list">
               {groups.map((group) => (
                 <div key={group.id} className="chat-item group-item" onClick={() => navigate(`/group/${group.id}`)}>
                   <img src={group.photoURL || "https://via.placeholder.com/50"} alt={group.name} className="group-avatar" />
@@ -201,8 +199,8 @@ function Chats() {
           </div>
         )}
 
-        <div className="private-chats-section">
-          <h3 className="section-label">Private Chats</h3>
+        <div className="chats-section">
+          <h3 className="chats-section-title">Private Chats</h3>
           <div className="chats-list">
             {chats.length === 0 ? (
               <div className="empty-state">

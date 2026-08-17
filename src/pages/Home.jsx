@@ -1,11 +1,11 @@
-// src/pages/Home.jsx - Desktop Sidebar + Mobile Top Bar
+// src/pages/Home.jsx - Close Friends Modal + Auto Upload Progress
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { getActiveStories, viewStory } from "../services/storyService";
+import { getActiveStories, viewStory, createStory } from "../services/storyService";
 import { uploadStoryMedia } from "../services/storageService";
-import { createStory } from "../services/storyService";
+import { getUserChats } from "../services/chatService";
 import toast from "react-hot-toast";
 import {
   FiMessageCircle,
@@ -17,7 +17,8 @@ import {
   FiX,
   FiChevronLeft,
   FiChevronRight,
-  FiHome
+  FiHome,
+  FiCheck
 } from "react-icons/fi";
 import "../styles/home.css";
 
@@ -26,13 +27,16 @@ function Home() {
   const [user, setUser] = useState(null);
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // Viewer state
-  const [viewerOpen, setViewerOpen] = useState(false);
-  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
-  const [progress, setProgress] = useState(0);
+
+  // Upload Modal State
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadingStory, setUploadingStory] = useState(false);
-  const storyFileInputRef = useRef(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [friends, setFriends] = useState([]);
+  const [selectedFriends, setSelectedFriends] = useState([]);
+  const [uploadedFile, setUploadedFile] = useState(null);
+  
+  const fileInputRef = useRef(null);
   const progressTimerRef = useRef(null);
 
   useEffect(() => {
@@ -51,6 +55,12 @@ function Home() {
           return aSeen - bSeen;
         });
         setStories(sortedStories);
+
+        // Load friends for Close Friends
+        const userChats = await getUserChats(currentUser.uid);
+        const friendsList = userChats.map(chat => chat.otherUser).filter(user => user);
+        setFriends(friendsList);
+        setSelectedFriends(friendsList.map(f => f.uid));
       } catch (error) {
         toast.error("Failed to load home data");
       } finally {
@@ -61,44 +71,78 @@ function Home() {
     fetchHomeData();
   }, []);
 
-  const closeViewer = () => {
-    setViewerOpen(false);
-    clearTimeout(progressTimerRef.current);
-    loadStories();
+  // --- Upload Modal Logic ---
+
+  const handleProfileClick = () => {
+    setShowUploadModal(true);
+    setUploadedFile(null);
+    setUploadProgress(0);
+    setUploadingStory(false);
+    fileInputRef.current.value = "";
   };
 
-  const goToNextStory = () => {
-    if (currentStoryIndex < stories.length - 1) {
-      setCurrentStoryIndex(prev => prev + 1);
-      setProgress(0);
-      startProgressTimer();
-    } else {
-      closeViewer();
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setUploadedFile(file);
     }
   };
 
-  const goToPrevStory = () => {
-    if (currentStoryIndex > 0) {
-      setCurrentStoryIndex(prev => prev - 1);
-      setProgress(0);
-      startProgressTimer();
+  const handleUpload = async () => {
+    if (!uploadedFile) {
+      toast.error("Please select a photo first");
+      return;
+    }
+    if (selectedFriends.length === 0) {
+      toast.error("Please select at least one Close Friend");
+      return;
+    }
+
+    try {
+      setUploadingStory(true);
+      setUploadProgress(0);
+      
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 300);
+
+      const mediaURL = await uploadStoryMedia(auth.currentUser.uid, uploadedFile, "photo");
+      await createStory(auth.currentUser.uid, {
+        mediaURL,
+        mediaType: "photo",
+        allowedViewers: selectedFriends
+      });
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      toast.success("Story posted to Close Friends!");
+      setTimeout(() => {
+        setShowUploadModal(false);
+        loadStories();
+        setUploadedFile(null);
+        setUploadProgress(0);
+        setUploadingStory(false);
+      }, 1000);
+
+    } catch (error) {
+      toast.error("Failed to upload story");
+      setUploadingStory(false);
+      setUploadProgress(0);
     }
   };
 
-  const startProgressTimer = () => {
-    clearTimeout(progressTimerRef.current);
-    setProgress(0);
-    const duration = 5000;
-    const interval = 50;
-    let currentProgress = 0;
-    progressTimerRef.current = setInterval(() => {
-      currentProgress += (interval / duration) * 100;
-      setProgress(Math.min(currentProgress, 100));
-      if (currentProgress >= 100) {
-        clearTimeout(progressTimerRef.current);
-        setTimeout(() => goToNextStory(), 300);
-      }
-    }, interval);
+  const toggleFriendSelection = (uid) => {
+    setSelectedFriends(prev => 
+      prev.includes(uid) ? prev.filter(id => id !== uid) : [...prev, uid]
+    );
   };
 
   const loadStories = async () => {
@@ -114,46 +158,6 @@ function Home() {
       setStories(sortedStories);
     } catch (error) {
       console.error("Error loading stories:", error);
-    }
-  };
-
-  const openViewer = async (index) => {
-    setCurrentStoryIndex(index);
-    setViewerOpen(true);
-    setProgress(0);
-    const story = stories[index];
-    if (story && story.ownerId !== auth.currentUser.uid) {
-      try {
-        await viewStory(story.id, auth.currentUser.uid);
-        setTimeout(() => loadStories(), 1000);
-      } catch (error) {
-        console.error("Error viewing story:", error);
-      }
-    }
-    startProgressTimer();
-  };
-
-  const handleProfileClick = () => {
-    storyFileInputRef.current?.click();
-  };
-
-  const handleProfileStoryUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      setUploadingStory(true);
-      const mediaURL = await uploadStoryMedia(auth.currentUser.uid, file, "photo");
-      await createStory(auth.currentUser.uid, {
-        mediaURL,
-        mediaType: "photo"
-      });
-      toast.success("Story posted from profile!");
-      loadStories();
-      storyFileInputRef.current.value = "";
-    } catch (error) {
-      toast.error("Failed to upload story");
-    } finally {
-      setUploadingStory(false);
     }
   };
 
@@ -173,7 +177,7 @@ function Home() {
   return (
     <div className="home-container">
       
-      {/* ===== DESKTOP SIDEBAR ===== */}
+      {/* DESKTOP SIDEBAR */}
       <div className="desktop-sidebar">
         <h2>BuddyChat</h2>
         <nav className="desktop-nav">
@@ -203,7 +207,7 @@ function Home() {
         </div>
       </div>
 
-      {/* ===== MOBILE TOP BAR ===== */}
+      {/* MOBILE TOP BAR */}
       <div className="mobile-top-bar">
         <div className="mobile-brand">
           <h1>BuddyChat</h1>
@@ -217,7 +221,7 @@ function Home() {
         </div>
       </div>
 
-      {/* ===== MAIN CONTENT ===== */}
+      {/* MAIN CONTENT */}
       <div className="main-content-mobile">
         <div className="home-stories-section">
           <div className="stories-header-row">
@@ -227,6 +231,7 @@ function Home() {
             </Link>
           </div>
           <div className="stories-horizontal">
+            
             {/* Own Profile Circle */}
             <div className="story-circle own-story" onClick={handleProfileClick}>
               <div className="story-circle-border">
@@ -239,13 +244,8 @@ function Home() {
               </div>
               <p className="story-circle-name">You</p>
             </div>
-            <input
-              type="file"
-              ref={storyFileInputRef}
-              onChange={handleProfileStoryUpload}
-              accept="image/*"
-              hidden
-            />
+            
+            <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" style={{ display: 'none' }} />
 
             {/* Friends Stories */}
             {stories.length === 0 ? (
@@ -277,32 +277,80 @@ function Home() {
         </div>
       </div>
 
-      {/* ===== FULL SCREEN VIEWER ===== */}
-      {viewerOpen && stories.length > 0 && (
-        <div className="story-viewer-overlay" onClick={closeViewer}>
-          <div className="story-viewer-content" onClick={(e) => e.stopPropagation()}>
-            <div className="story-progress-container">
-              {stories.map((_, idx) => (
-                <div key={idx} className={`story-progress-bar ${idx < currentStoryIndex ? 'completed' : ''} ${idx === currentStoryIndex ? 'active' : ''}`}>
-                  <div className="story-progress-fill" style={{ width: idx === currentStoryIndex ? `${progress}%` : idx < currentStoryIndex ? '100%' : '0%' }}></div>
-                </div>
-              ))}
+      {/* ===== CLOSE FRIENDS UPLOAD MODAL ===== */}
+      {showUploadModal && (
+        <div className="upload-modal-overlay" onClick={() => setShowUploadModal(false)}>
+          <div className="upload-modal-content" onClick={(e) => e.stopPropagation()}>
+            
+            <div className="upload-modal-header">
+              <h3>Add to Story</h3>
+              <button onClick={() => setShowUploadModal(false)} className="close-modal-btn"><FiX size={24} /></button>
             </div>
-            <img src={stories[currentStoryIndex].mediaURL} alt="Story" className="story-viewer-image" />
-            <div className="story-viewer-top">
-              <div className="story-viewer-user">
-                <img src={stories[currentStoryIndex].owner.photoURL || "https://via.placeholder.com/30"} alt="Profile" className="story-viewer-avatar" />
-                <div>
-                  <p className="story-viewer-username">@{stories[currentStoryIndex].owner.username}</p>
-                  <p className="story-viewer-time">Just now</p>
+
+            <div className="upload-modal-body">
+              
+              {/* Step 1: Select Photo */}
+              {!uploadedFile && !uploadingStory && (
+                <div className="upload-option" onClick={() => fileInputRef.current?.click()}>
+                  <div className="upload-option-icon">📸</div>
+                  <p>Tap to select a photo</p>
                 </div>
-              </div>
-              <button onClick={closeViewer} className="story-viewer-btn close-btn"><FiX size={24} /></button>
+              )}
+
+              {/* Step 2: Show Selected Photo + Close Friends */}
+              {uploadedFile && !uploadingStory && (
+                <div className="upload-preview-section">
+                  <img src={URL.createObjectURL(uploadedFile)} alt="Preview" className="upload-preview-img" />
+                  <div className="close-friends-modal-list">
+                    <h4>Select Close Friends (Who can see this)</h4>
+                    <div className="friends-scroll-list">
+                      {friends.length === 0 ? (
+                        <p className="no-friends-msg">No chats yet. Start chatting to add friends!</p>
+                      ) : (
+                        friends.map((friend) => (
+                          <div 
+                            key={friend.uid} 
+                            className={`friend-modal-item ${selectedFriends.includes(friend.uid) ? 'selected' : ''}`}
+                            onClick={() => toggleFriendSelection(friend.uid)}
+                          >
+                            <img src={friend.photoURL || "https://via.placeholder.com/36"} alt={friend.displayName} />
+                            <span className="friend-modal-name">{friend.displayName}</span>
+                            <div className="check-box-modal">
+                              {selectedFriends.includes(friend.uid) && <FiCheck size={16} />}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <div className="selected-count-modal">
+                      Selected: {selectedFriends.length} / {friends.length}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Progress Bar */}
+              {uploadingStory && (
+                <div className="upload-progress-modal">
+                  <div className="upload-progress-bar">
+                    <div className="progress-fill" style={{ width: `${uploadProgress}%` }}></div>
+                  </div>
+                  <p className="progress-text">Posting story... {uploadProgress}%</p>
+                </div>
+              )}
+
+              {/* Step 4: Post Button */}
+              {uploadedFile && !uploadingStory && (
+                <button 
+                  onClick={handleUpload} 
+                  className="upload-post-btn"
+                  disabled={uploadingStory || selectedFriends.length === 0}
+                >
+                  Post Story
+                </button>
+              )}
+
             </div>
-            {currentStoryIndex > 0 && <div className="story-nav left" onClick={(e) => { e.stopPropagation(); goToPrevStory(); }}><FiChevronLeft size={40} /></div>}
-            {currentStoryIndex < stories.length - 1 && <div className="story-nav right" onClick={(e) => { e.stopPropagation(); goToNextStory(); }}><FiChevronRight size={40} /></div>}
-            <div className="story-touch-left" onClick={(e) => { e.stopPropagation(); goToPrevStory(); }}></div>
-            <div className="story-touch-right" onClick={(e) => { e.stopPropagation(); goToNextStory(); }}></div>
           </div>
         </div>
       )}
