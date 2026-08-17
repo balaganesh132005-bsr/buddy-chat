@@ -1,4 +1,4 @@
-// src/pages/Home.jsx - Instagram Style Mobile
+// src/pages/Home.jsx - Instagram Style Stories Row
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -6,7 +6,6 @@ import { doc, getDoc } from "firebase/firestore";
 import { getActiveStories } from "../services/storyService";
 import toast from "react-hot-toast";
 import {
-  FiHome,
   FiMessageCircle,
   FiImage,
   FiUser,
@@ -31,7 +30,7 @@ function Home() {
         const userDoc = await getDoc(doc(db, "users", currentUser.uid));
         setUser({ uid: currentUser.uid, ...userDoc.data() });
 
-        const activeStories = await getActiveStories();
+        const activeStories = await getActiveStories(currentUser.uid);
         setStories(activeStories);
       } catch (error) {
         toast.error("Failed to load home data");
@@ -53,16 +52,12 @@ function Home() {
   };
 
   if (loading) {
-    return (
-      <div className="home-container">
-        <div className="loading">Loading...</div>
-      </div>
-    );
+    return <div className="loading">Loading...</div>;
   }
 
   return (
     <div className="home-container">
-      {/* Mobile Top Bar */}
+      {/* Mobile Top Bar - Instagram Style */}
       <div className="mobile-top-bar">
         <div className="mobile-brand">
           <h1>BuddyChat</h1>
@@ -76,7 +71,7 @@ function Home() {
         </div>
       </div>
 
-      {/* Main Content - Stories */}
+      {/* Main Content - Stories Row */}
       <div className="main-content-mobile">
         <div className="home-stories-section">
           <div className="stories-header-row">

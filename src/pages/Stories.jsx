@@ -1,4 +1,4 @@
-// src/pages/Stories.jsx - Plus Button + Viewers + Privacy
+// src/pages/Stories.jsx - Complete Stories Page
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -10,8 +10,9 @@ import {
   getStoryViewers 
 } from "../services/storyService";
 import { uploadStoryMedia } from "../services/storageService";
+import { getUserChats } from "../services/chatService"; // For Close Friends list
 import toast from "react-hot-toast";
-import { FiPlus, FiX, FiEye, FiArrowLeft, FiTrash2, FiUsers, FiChevronLeft, FiChevronRight, FiLock, FiGlobe } from "react-icons/fi";
+import { FiPlus, FiX, FiEye, FiArrowLeft, FiTrash2, FiUsers, FiChevronLeft, FiChevronRight, FiCheck, FiUser } from "react-icons/fi";
 import "../styles/stories.css";
 
 function Stories() {
@@ -19,7 +20,10 @@ function Stories() {
   const [stories, setStories] = useState([]);
   const [showUpload, setShowUpload] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [privacy, setPrivacy] = useState("public"); // public or private
+  
+  // Close Friends state
+  const [friends, setFriends] = useState([]);
+  const [selectedFriends, setSelectedFriends] = useState([]);
   
   // Viewer state
   const [viewerOpen, setViewerOpen] = useState(false);
@@ -34,6 +38,7 @@ function Stories() {
 
   useEffect(() => {
     loadStories();
+    loadFriends();
   }, []);
 
   const loadStories = async () => {
@@ -42,6 +47,18 @@ function Stories() {
       setStories(activeStories);
     } catch (error) {
       toast.error("Failed to load stories");
+    }
+  };
+
+  const loadFriends = async () => {
+    try {
+      const userChats = await getUserChats(auth.currentUser.uid);
+      const friendsList = userChats.map(chat => chat.otherUser).filter(user => user);
+      setFriends(friendsList);
+      // Default: Select all friends
+      setSelectedFriends(friendsList.map(f => f.uid));
+    } catch (error) {
+      console.error("Error loading friends:", error);
     }
   };
 
@@ -54,9 +71,9 @@ function Stories() {
       await createStory(auth.currentUser.uid, {
         mediaURL,
         mediaType: "photo",
-        privacy: privacy
+        allowedViewers: selectedFriends
       });
-      toast.success("Story posted!");
+      toast.success("Story posted to selected friends!");
       setShowUpload(false);
       loadStories();
       fileInputRef.current.value = "";
@@ -65,6 +82,12 @@ function Stories() {
     } finally {
       setUploading(false);
     }
+  };
+
+  const toggleFriendSelection = (uid) => {
+    setSelectedFriends(prev => 
+      prev.includes(uid) ? prev.filter(id => id !== uid) : [...prev, uid]
+    );
   };
 
   const closeViewer = useCallback(() => {
@@ -168,20 +191,41 @@ function Stories() {
         </button>
       </div>
 
-      {/* Upload Section with Privacy Toggle */}
+      {/* Upload Section with Close Friends Selector */}
       {showUpload && (
         <div className="upload-section-modern">
-          <div className="upload-privacy">
-            <label>Privacy:</label>
-            <button onClick={() => setPrivacy("public")} className={`privacy-btn ${privacy === "public" ? "active" : ""}`}><FiGlobe /> Public</button>
-            <button onClick={() => setPrivacy("private")} className={`privacy-btn ${privacy === "private" ? "active" : ""}`}><FiLock /> Private</button>
-          </div>
           <div className="upload-drop-area" onClick={() => fileInputRef.current?.click()}>
             <div className="upload-icon">📸</div>
             <p>Tap to select a photo</p>
           </div>
           <input type="file" ref={fileInputRef} onChange={handleStoryUpload} accept="image/*" hidden />
           {uploading && <div className="upload-progress"><div className="progress-bar"></div></div>}
+          
+          <div className="close-friends-section">
+            <h4>Select Close Friends (Who can see this)</h4>
+            <div className="friends-list-select">
+              {friends.length === 0 ? (
+                <p className="no-friends-msg">Start chatting with someone to add them as a close friend!</p>
+              ) : (
+                friends.map((friend) => (
+                  <div 
+                    key={friend.uid} 
+                    className={`friend-select-item ${selectedFriends.includes(friend.uid) ? 'selected' : ''}`}
+                    onClick={() => toggleFriendSelection(friend.uid)}
+                  >
+                    <img src={friend.photoURL || "https://via.placeholder.com/40"} alt={friend.displayName} />
+                    <span className="friend-name">{friend.displayName}</span>
+                    <div className="check-box">
+                      {selectedFriends.includes(friend.uid) && <FiCheck size={16} />}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="selected-count">
+              Selected: {selectedFriends.length} / {friends.length} friends
+            </div>
+          </div>
         </div>
       )}
 
@@ -233,17 +277,16 @@ function Stories() {
                 </div>
               </div>
               <div className="story-viewer-actions">
-                {/* Viewers button - ONLY OWNER */}
+                {/* Viewers & Delete - ONLY OWNER */}
                 {stories[currentStoryIndex].ownerId === auth.currentUser.uid && (
-                  <button onClick={(e) => handleShowViewers(stories[currentStoryIndex].id, e)} className="story-viewer-btn viewers-btn">
-                    <FiUsers size={18} />
-                  </button>
-                )}
-                {/* Delete button - ONLY OWNER */}
-                {stories[currentStoryIndex].ownerId === auth.currentUser.uid && (
-                  <button onClick={(e) => handleDeleteStory(stories[currentStoryIndex].id, e)} className="story-viewer-btn delete-btn">
-                    <FiTrash2 size={18} />
-                  </button>
+                  <>
+                    <button onClick={(e) => handleShowViewers(stories[currentStoryIndex].id, e)} className="story-viewer-btn viewers-btn">
+                      <FiUsers size={18} />
+                    </button>
+                    <button onClick={(e) => handleDeleteStory(stories[currentStoryIndex].id, e)} className="story-viewer-btn delete-btn">
+                      <FiTrash2 size={18} />
+                    </button>
+                  </>
                 )}
                 <button onClick={closeViewer} className="story-viewer-btn close-btn"><FiX size={24} /></button>
               </div>
@@ -257,7 +300,7 @@ function Stories() {
         </div>
       )}
 
-      {/* Grid */}
+      {/* Grid - 2 columns for desktop and mobile */}
       {!viewerOpen && (
         <div className="stories-grid">
           {stories.map((story, index) => {
@@ -273,10 +316,10 @@ function Stories() {
                     <div className="story-views"><FiEye size={14} /> {story.viewCount || 0}</div>
                   )}
                   {!isOwnStory && (
-                    <div className="story-views"><FiEye size={14} /> </div>
+                    <div className="story-views"><FiEye size={14} /></div>
                   )}
                 </div>
-                {/* Plus button on own stories */}
+                {/* Plus & Delete buttons on own stories */}
                 {isOwnStory && (
                   <div className="story-actions">
                     <button onClick={() => setShowUpload(true)} className="add-story-btn">

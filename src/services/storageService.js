@@ -167,3 +167,74 @@ export const uploadGroupPhoto = async (groupId, file) => {
     throw new Error(error.message);
   }
 };
+// Create story
+export const createStory = async (userId, storyData) => {
+  try {
+    const storiesRef = collection(db, "stories");
+    const storyId = doc(storiesRef).id;
+
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
+
+    await setDoc(doc(storiesRef, storyId), {
+      storyId,
+      ownerId: userId,
+      mediaURL: storyData.mediaURL,
+      mediaType: storyData.mediaType || "photo",
+      text: storyData.text || "",
+      createdAt: now,
+      expiresAt: expiresAt,
+      viewers: [],
+      viewCount: 0,
+      allowedViewers: storyData.allowedViewers || [] // Close friends list
+    });
+
+    return storyId;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};// Get all active stories (Only for owner + allowedViewers)
+export const getActiveStories = async (currentUserId) => {
+  try {
+    const q = query(
+      collection(db, "stories"),
+      where("expiresAt", ">", new Date())
+    );
+
+    const snapshot = await getDocs(q);
+    const stories = [];
+
+    for (const storyDoc of snapshot.docs) {
+      const storyData = storyDoc.data();
+      
+      // Privacy Check: 
+      // 1. Owner can see their own stories
+      // 2. If allowedViewers exists, check if current user is in the list
+      // 3. If allowedViewers is empty, it's public
+      if (storyData.ownerId === currentUserId) {
+        // Owner always sees
+      } else if (storyData.allowedViewers && storyData.allowedViewers.length > 0) {
+        if (!storyData.allowedViewers.includes(currentUserId)) {
+          continue; // Skip if user is not allowed
+        }
+      }
+
+      const ownerDoc = await getDoc(doc(db, "users", storyData.ownerId));
+      stories.push({
+        id: storyDoc.id,
+        ...storyData,
+        owner: ownerDoc.data() || {}
+      });
+    }
+
+    stories.sort((a, b) => {
+      const aTime = a.createdAt?.toDate?.() || new Date(0);
+      const bTime = b.createdAt?.toDate?.() || new Date(0);
+      return bTime - aTime;
+    });
+
+    return stories;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
