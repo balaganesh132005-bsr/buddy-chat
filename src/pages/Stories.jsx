@@ -11,7 +11,7 @@ import {
 } from "../services/storyService";
 import { uploadStoryMedia } from "../services/storageService";
 import toast from "react-hot-toast";
-import { FiPlus, FiX, FiEye, FiArrowLeft, FiTrash2, FiUsers } from "react-icons/fi";
+import { FiPlus, FiX, FiEye, FiArrowLeft, FiTrash2, FiUsers, FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import "../styles/stories.css";
 
 function Stories() {
