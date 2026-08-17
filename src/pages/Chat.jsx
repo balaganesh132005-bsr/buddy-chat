@@ -1,7 +1,9 @@
+// src/pages/Chat.jsx - Chats List (Private + Groups) - FIXED IMPORTS
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
 import { getUserChats } from "../services/chatService";
+import { getUserGroups } from "../services/groupService"; // ✅ FIXED: Added this import
 import { searchUserByUsername } from "../services/authService";
 import { getOrCreatePrivateChat } from "../services/chatService";
 import { doc, getDoc } from "firebase/firestore";
@@ -13,8 +15,11 @@ import {
   FiUser,
   FiSettings,
   FiLogOut,
-  FiPlus
-} from "react-icons/fi"; // Removed FiMessageCircle
+  FiPlus,
+  FiUsers,
+  FiMessageCircle, // ✅ FIXED: Added this import
+  FiArrowLeft      // ✅ FIXED: Added this import
+} from "react-icons/fi";
 import "../styles/home.css";
 
 function Chats() {
@@ -117,7 +122,7 @@ function Chats() {
             <span>Home</span>
           </Link>
           <Link to="/chats" className="nav-item active">
-            <FiMessageCircle size={20} />
+            <FiMessageCircle size={20} /> {/* ✅ Now works */}
             <span>Chats</span>
           </Link>
           <Link to="/stories" className="nav-item">
@@ -153,7 +158,7 @@ function Chats() {
       <div className="main-content">
         <div className="content-header">
           <button onClick={() => navigate("/")} className="back-btn-header">
-            <FiArrowLeft size={20} />
+            <FiArrowLeft size={20} /> {/* ✅ Now works */}
           </button>
           <h2>Chats</h2>
           <button 
