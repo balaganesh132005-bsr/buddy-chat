@@ -1,4 +1,5 @@
 // src/pages/Groups.jsx - Clean Layout with Proper CSS
+import "../styles/home.css";  // Add this at the top, below other imports
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
