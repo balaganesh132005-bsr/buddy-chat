@@ -1,4 +1,4 @@
-// src/pages/Home.jsx - Stories Row + Viewer + Profile Upload
+// src/pages/Home.jsx - Desktop Sidebar + Mobile Top Bar
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -16,7 +16,8 @@ import {
   FiEye,
   FiX,
   FiChevronLeft,
-  FiChevronRight
+  FiChevronRight,
+  FiHome
 } from "react-icons/fi";
 import "../styles/home.css";
 
@@ -44,7 +45,6 @@ function Home() {
         setUser({ uid: currentUser.uid, ...userDoc.data() });
 
         const activeStories = await getActiveStories(currentUser.uid);
-        // Sort: Unseen stories first (Owner stories always seen)
         const sortedStories = activeStories.sort((a, b) => {
           const aSeen = a.viewers?.includes(currentUser.uid) || a.ownerId === currentUser.uid;
           const bSeen = b.viewers?.includes(currentUser.uid) || b.ownerId === currentUser.uid;
@@ -61,12 +61,10 @@ function Home() {
     fetchHomeData();
   }, []);
 
-  // --- Viewer Logic ---
-
   const closeViewer = () => {
     setViewerOpen(false);
     clearTimeout(progressTimerRef.current);
-    loadStories(); // Refresh to update seen status
+    loadStories();
   };
 
   const goToNextStory = () => {
@@ -135,8 +133,6 @@ function Home() {
     startProgressTimer();
   };
 
-  // --- Profile Circle Upload ---
-
   const handleProfileClick = () => {
     storyFileInputRef.current?.click();
   };
@@ -176,7 +172,38 @@ function Home() {
 
   return (
     <div className="home-container">
-      {/* Mobile Top Bar */}
+      
+      {/* ===== DESKTOP SIDEBAR ===== */}
+      <div className="desktop-sidebar">
+        <h2>BuddyChat</h2>
+        <nav className="desktop-nav">
+          <Link to="/" className="desktop-nav-item active">
+            <FiHome size={20} /> Home
+          </Link>
+          <Link to="/chats" className="desktop-nav-item">
+            <FiMessageCircle size={20} /> Chats
+          </Link>
+          <Link to="/stories" className="desktop-nav-item">
+            <FiImage size={20} /> Stories
+          </Link>
+          <Link to="/profile" className="desktop-nav-item">
+            <FiUser size={20} /> Profile
+          </Link>
+          <Link to="/settings" className="desktop-nav-item">
+            <FiSettings size={20} /> Settings
+          </Link>
+          <button onClick={handleLogout} className="desktop-nav-item logout">
+            <FiLogOut size={20} /> Logout
+          </button>
+        </nav>
+        <div className="sidebar-user">
+          {user?.photoURL && <img src={user.photoURL} alt="Profile" />}
+          <p className="user-name">{user?.displayName}</p>
+          <p className="user-handle">@{user?.username}</p>
+        </div>
+      </div>
+
+      {/* ===== MOBILE TOP BAR ===== */}
       <div className="mobile-top-bar">
         <div className="mobile-brand">
           <h1>BuddyChat</h1>
@@ -190,7 +217,7 @@ function Home() {
         </div>
       </div>
 
-      {/* Main Content - Stories Row */}
+      {/* ===== MAIN CONTENT ===== */}
       <div className="main-content-mobile">
         <div className="home-stories-section">
           <div className="stories-header-row">
@@ -200,7 +227,7 @@ function Home() {
             </Link>
           </div>
           <div className="stories-horizontal">
-            {/* Own Profile Story Upload Circle */}
+            {/* Own Profile Circle */}
             <div className="story-circle own-story" onClick={handleProfileClick}>
               <div className="story-circle-border">
                 <img
@@ -250,73 +277,32 @@ function Home() {
         </div>
       </div>
 
-      {/* ===== FULL SCREEN STORY VIEWER ===== */}
+      {/* ===== FULL SCREEN VIEWER ===== */}
       {viewerOpen && stories.length > 0 && (
         <div className="story-viewer-overlay" onClick={closeViewer}>
           <div className="story-viewer-content" onClick={(e) => e.stopPropagation()}>
-            
-            {/* Progress Lines */}
             <div className="story-progress-container">
               {stories.map((_, idx) => (
-                <div
-                  key={idx}
-                  className={`story-progress-bar ${idx < currentStoryIndex ? 'completed' : ''} ${idx === currentStoryIndex ? 'active' : ''}`}
-                >
-                  <div
-                    className="story-progress-fill"
-                    style={{ width: idx === currentStoryIndex ? `${progress}%` : idx < currentStoryIndex ? '100%' : '0%' }}
-                  ></div>
+                <div key={idx} className={`story-progress-bar ${idx < currentStoryIndex ? 'completed' : ''} ${idx === currentStoryIndex ? 'active' : ''}`}>
+                  <div className="story-progress-fill" style={{ width: idx === currentStoryIndex ? `${progress}%` : idx < currentStoryIndex ? '100%' : '0%' }}></div>
                 </div>
               ))}
             </div>
-
-            {/* Story Image */}
-            <img
-              src={stories[currentStoryIndex].mediaURL}
-              alt="Story"
-              className="story-viewer-image"
-            />
-
-            {/* Top Info */}
+            <img src={stories[currentStoryIndex].mediaURL} alt="Story" className="story-viewer-image" />
             <div className="story-viewer-top">
               <div className="story-viewer-user">
-                <img
-                  src={stories[currentStoryIndex].owner.photoURL || "https://via.placeholder.com/30"}
-                  alt="Profile"
-                  className="story-viewer-avatar"
-                />
+                <img src={stories[currentStoryIndex].owner.photoURL || "https://via.placeholder.com/30"} alt="Profile" className="story-viewer-avatar" />
                 <div>
                   <p className="story-viewer-username">@{stories[currentStoryIndex].owner.username}</p>
                   <p className="story-viewer-time">Just now</p>
                 </div>
               </div>
-              <button onClick={closeViewer} className="story-viewer-btn close-btn">
-                <FiX size={24} />
-              </button>
+              <button onClick={closeViewer} className="story-viewer-btn close-btn"><FiX size={24} /></button>
             </div>
-
-            {/* Navigation Arrows (Desktop) */}
-            {currentStoryIndex > 0 && (
-              <div
-                className="story-nav left"
-                onClick={(e) => { e.stopPropagation(); goToPrevStory(); }}
-              >
-                <FiChevronLeft size={40} />
-              </div>
-            )}
-            {currentStoryIndex < stories.length - 1 && (
-              <div
-                className="story-nav right"
-                onClick={(e) => { e.stopPropagation(); goToNextStory(); }}
-              >
-                <FiChevronRight size={40} />
-              </div>
-            )}
-
-            {/* Touch Areas (Mobile Swipe) */}
+            {currentStoryIndex > 0 && <div className="story-nav left" onClick={(e) => { e.stopPropagation(); goToPrevStory(); }}><FiChevronLeft size={40} /></div>}
+            {currentStoryIndex < stories.length - 1 && <div className="story-nav right" onClick={(e) => { e.stopPropagation(); goToNextStory(); }}><FiChevronRight size={40} /></div>}
             <div className="story-touch-left" onClick={(e) => { e.stopPropagation(); goToPrevStory(); }}></div>
             <div className="story-touch-right" onClick={(e) => { e.stopPropagation(); goToNextStory(); }}></div>
-
           </div>
         </div>
       )}
