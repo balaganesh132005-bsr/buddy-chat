@@ -1,4 +1,4 @@
-// src/pages/Home.jsx - Only Stories, No Groups
+// src/pages/Home.jsx - Instagram Style Mobile
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -62,53 +62,22 @@ function Home() {
 
   return (
     <div className="home-container">
-      {/* Sidebar */}
-      <div className="sidebar">
-        <div className="sidebar-header">
+      {/* Mobile Top Bar */}
+      <div className="mobile-top-bar">
+        <div className="mobile-brand">
           <h1>BuddyChat</h1>
         </div>
-
-        <nav className="sidebar-nav">
-          <Link to="/" className="nav-item active">
-            <FiHome size={20} />
-            <span>Home</span>
-          </Link>
-          <Link to="/chats" className="nav-item">
-            <FiMessageCircle size={20} />
-            <span>Chats</span>
-          </Link>
-          <Link to="/stories" className="nav-item">
-            <FiImage size={20} />
-            <span>Stories</span>
-          </Link>
-          <Link to="/profile" className="nav-item">
-            <FiUser size={20} />
-            <span>Profile</span>
-          </Link>
-          <Link to="/settings" className="nav-item">
-            <FiSettings size={20} />
-            <span>Settings</span>
-          </Link>
-          <button onClick={handleLogout} className="nav-item logout">
-            <FiLogOut size={20} />
-            <span>Logout</span>
-          </button>
-        </nav>
-
-        <div className="sidebar-user">
-          {user?.photoURL && (
-            <img src={user.photoURL} alt={user.displayName} />
-          )}
-          <div>
-            <p className="user-name">{user?.displayName || "User"}</p>
-            <p className="user-handle">@{user?.username}</p>
-          </div>
+        <div className="mobile-nav-icons">
+          <Link to="/chats" className="mobile-icon"><FiMessageCircle size={22} /></Link>
+          <Link to="/stories" className="mobile-icon"><FiImage size={22} /></Link>
+          <Link to="/profile" className="mobile-icon"><FiUser size={22} /></Link>
+          <Link to="/settings" className="mobile-icon"><FiSettings size={22} /></Link>
+          <button onClick={handleLogout} className="mobile-icon logout-icon"><FiLogOut size={22} /></button>
         </div>
       </div>
 
-      {/* Main Content - Only Stories (Instagram Style) */}
-      <div className="main-content">
-        {/* Stories Row */}
+      {/* Main Content - Stories */}
+      <div className="main-content-mobile">
         <div className="home-stories-section">
           <div className="stories-header-row">
             <h3>Stories</h3>
