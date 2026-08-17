@@ -1,4 +1,4 @@
-// src/pages/Chats.jsx - Desktop + Mobile Fix
+// src/pages/Chats.jsx - Clean Desktop/Mobile Layout
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -10,15 +10,15 @@ import { doc, getDoc } from "firebase/firestore";
 import toast from "react-hot-toast";
 import {
   FiSearch,
+  FiPlus,
   FiHome,
+  FiMessageCircle,
   FiImage,
   FiUser,
   FiSettings,
-  FiLogOut,
-  FiPlus,
-  FiMessageCircle
+  FiLogOut
 } from "react-icons/fi";
-import "../styles/home.css";
+import "../styles/home.css"; // Reusing home.css for sidebar
 
 function Chats() {
   const navigate = useNavigate();
@@ -101,35 +101,65 @@ function Chats() {
   }
 
   return (
-    <div className="chats-page-wrapper">
-      {/* Top Bar (Desktop & Mobile) */}
-      <div className="chats-top-bar">
-        <div className="chats-brand">
-          <Link to="/" className="brand-link">BuddyChat</Link>
-        </div>
-        <div className="chats-nav-icons">
-          <Link to="/" className="nav-icon"><FiHome size={20} /></Link>
-          <Link to="/chats" className="nav-icon active"><FiMessageCircle size={20} /></Link>
-          <Link to="/stories" className="nav-icon"><FiImage size={20} /></Link>
-          <Link to="/profile" className="nav-icon"><FiUser size={20} /></Link>
-          <Link to="/settings" className="nav-icon"><FiSettings size={20} /></Link>
-          <button onClick={handleLogout} className="nav-icon logout-btn"><FiLogOut size={20} /></button>
+    <div className="home-container">
+      
+      {/* DESKTOP SIDEBAR */}
+      <div className="desktop-sidebar">
+        <h2>BuddyChat</h2>
+        <nav className="desktop-nav">
+          <Link to="/" className="desktop-nav-item">
+            <FiHome size={20} /> Home
+          </Link>
+          <Link to="/chats" className="desktop-nav-item active">
+            <FiMessageCircle size={20} /> Chats
+          </Link>
+          <Link to="/stories" className="desktop-nav-item">
+            <FiImage size={20} /> Stories
+          </Link>
+          <Link to="/profile" className="desktop-nav-item">
+            <FiUser size={20} /> Profile
+          </Link>
+          <Link to="/settings" className="desktop-nav-item">
+            <FiSettings size={20} /> Settings
+          </Link>
+          <button onClick={handleLogout} className="desktop-nav-item logout">
+            <FiLogOut size={20} /> Logout
+          </button>
+        </nav>
+        <div className="sidebar-user">
+          {user?.photoURL && <img src={user.photoURL} alt="Profile" />}
+          <p className="user-name">{user?.displayName}</p>
+          <p className="user-handle">@{user?.username}</p>
         </div>
       </div>
 
-      {/* Main Content Container */}
-      <div className="chats-content">
-        <div className="chats-header">
+      {/* MOBILE TOP BAR */}
+      <div className="mobile-top-bar">
+        <div className="mobile-brand">
+          <h1>BuddyChat</h1>
+        </div>
+        <div className="mobile-nav-icons">
+          <Link to="/" className="mobile-icon"><FiHome size={22} /></Link>
+          <Link to="/chats" className="mobile-icon"><FiMessageCircle size={22} /></Link>
+          <Link to="/stories" className="mobile-icon"><FiImage size={22} /></Link>
+          <Link to="/profile" className="mobile-icon"><FiUser size={22} /></Link>
+          <Link to="/settings" className="mobile-icon"><FiSettings size={22} /></Link>
+          <button onClick={handleLogout} className="mobile-icon logout-icon"><FiLogOut size={22} /></button>
+        </div>
+      </div>
+
+      {/* MAIN CONTENT */}
+      <div className="main-content-mobile">
+        <div className="content-header">
           <h2>Chats</h2>
           <button onClick={() => navigate("/groups")} className="create-btn">
-            <FiPlus size={18} /> New Group
+            <FiPlus size={20} /> New Group
           </button>
         </div>
 
-        {/* Search Bar */}
-        <div className="chats-search">
+        <div className="search-section">
           <div className="search-box">
-            <FiSearch size={18} />
+            <FiSearch size={20} />
             <input
               type="text"
               placeholder="Search username..."
@@ -141,26 +171,25 @@ function Chats() {
             <div className="search-results">
               {searchResults.map((result) => (
                 <div key={result.uid} className="search-result-item">
-                  <img src={result.photoURL || "https://via.placeholder.com/36"} alt={result.displayName} />
+                  <img src={result.photoURL || "https://via.placeholder.com/40"} alt={result.displayName} />
                   <div className="result-info">
                     <p className="result-name">{result.displayName}</p>
                     <p className="result-handle">@{result.username}</p>
                   </div>
-                  <button onClick={() => handleStartChat(result.uid)} className="message-btn">Chat</button>
+                  <button onClick={() => handleStartChat(result.uid)} className="message-btn">Message</button>
                 </div>
               ))}
             </div>
           )}
         </div>
 
-        {/* Groups Section */}
         {groups.length > 0 && (
-          <div className="chats-section">
-            <h3 className="section-title">Groups</h3>
-            <div className="chats-list">
+          <div className="groups-section-chats">
+            <h3 className="section-label">Groups</h3>
+            <div className="groups-chats-list">
               {groups.map((group) => (
                 <div key={group.id} className="chat-item group-item" onClick={() => navigate(`/group/${group.id}`)}>
-                  <img src={group.photoURL || "https://via.placeholder.com/48"} alt={group.name} className="group-avatar" />
+                  <img src={group.photoURL || "https://via.placeholder.com/50"} alt={group.name} className="group-avatar" />
                   <div className="chat-info">
                     <p className="chat-name">{group.name}</p>
                     <p className="chat-preview">{group.members?.length || 0} members</p>
@@ -172,9 +201,8 @@ function Chats() {
           </div>
         )}
 
-        {/* Private Chats Section */}
-        <div className="chats-section">
-          <h3 className="section-title">Private Chats</h3>
+        <div className="private-chats-section">
+          <h3 className="section-label">Private Chats</h3>
           <div className="chats-list">
             {chats.length === 0 ? (
               <div className="empty-state">
@@ -183,7 +211,7 @@ function Chats() {
             ) : (
               chats.map((chat) => (
                 <Link key={chat.id} to={`/chat/${chat.id}`} className="chat-item">
-                  <img src={chat.otherUser?.photoURL || "https://via.placeholder.com/48"} alt={chat.otherUser?.displayName || "User"} />
+                  <img src={chat.otherUser?.photoURL || "https://via.placeholder.com/50"} alt={chat.otherUser?.displayName || "User"} />
                   <div className="chat-info">
                     <p className="chat-name">{chat.otherUser?.displayName || "Unknown"}</p>
                     <p className="chat-preview">{chat.lastMessage || "Start a chat..."}</p>
