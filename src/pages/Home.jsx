@@ -1,4 +1,4 @@
-// src/pages/Home.jsx - Own Story Viewer on "You" click + Progress Lines
+// src/pages/Home.jsx - You circle opens own stories directly
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -37,11 +37,11 @@ function Home() {
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [uploadedFile, setUploadedFile] = useState(null);
 
-  // Viewer State (For Friends)
+  // Viewer State (For Friends + Own)
   const [viewerOpen, setViewerOpen] = useState(false);
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [viewerStories, setViewerStories] = useState([]); // The list currently being viewed
+  const [viewerStories, setViewerStories] = useState([]);
 
   const fileInputRef = useRef(null);
   const progressTimerRef = useRef(null);
@@ -55,7 +55,6 @@ function Home() {
         const userDoc = await getDoc(doc(db, "users", currentUser.uid));
         setUser({ uid: currentUser.uid, ...userDoc.data() });
 
-        // Fetch friends' stories
         const activeStories = await getActiveStories(currentUser.uid);
         const sortedStories = activeStories.sort((a, b) => {
           const aSeen = a.viewers?.includes(currentUser.uid);
@@ -64,7 +63,6 @@ function Home() {
         });
         setStories(sortedStories);
 
-        // Fetch my own stories
         const myActiveStories = await getUserStories(currentUser.uid);
         setMyStories(myActiveStories);
 
@@ -82,7 +80,7 @@ function Home() {
     fetchHomeData();
   }, []);
 
-  // --- Viewer Logic for Friends' Stories ---
+  // --- Viewer Logic ---
 
   const closeViewer = () => {
     setViewerOpen(false);
@@ -217,6 +215,7 @@ function Home() {
       setTimeout(() => {
         setShowUploadModal(false);
         loadMyStories();
+        loadStories();
         setUploadedFile(null);
         setUploadProgress(0);
         setUploadingStory(false);
@@ -315,7 +314,7 @@ function Home() {
           </div>
           <div className="stories-horizontal">
             
-            {/* OWN PROFILE CIRCLE - Click opens my stories or upload */}
+            {/* OWN PROFILE CIRCLE - Click opens my stories directly */}
             <div className="story-circle own-story" onClick={handleProfileClick}>
               <div className="story-circle-border">
                 <img
