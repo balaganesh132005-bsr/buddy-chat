@@ -1,9 +1,9 @@
-// src/pages/Home.jsx - Own Story in You circle, Others in separate circles
+// src/pages/Home.jsx - Own Story Viewer on "You" click + Progress Lines
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { getActiveStories, viewStory, createStory } from "../services/storyService";
+import { getActiveStories, viewStory, createStory, getUserStories } from "../services/storyService";
 import { uploadStoryMedia } from "../services/storageService";
 import { getUserChats } from "../services/chatService";
 import toast from "react-hot-toast";
@@ -26,6 +26,7 @@ function Home() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [stories, setStories] = useState([]);
+  const [myStories, setMyStories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Upload Modal State
@@ -35,7 +36,13 @@ function Home() {
   const [friends, setFriends] = useState([]);
   const [selectedFriends, setSelectedFriends] = useState([]);
   const [uploadedFile, setUploadedFile] = useState(null);
-  
+
+  // Viewer State (For Friends)
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [viewerStories, setViewerStories] = useState([]); // The list currently being viewed
+
   const fileInputRef = useRef(null);
   const progressTimerRef = useRef(null);
 
@@ -48,6 +55,7 @@ function Home() {
         const userDoc = await getDoc(doc(db, "users", currentUser.uid));
         setUser({ uid: currentUser.uid, ...userDoc.data() });
 
+        // Fetch friends' stories
         const activeStories = await getActiveStories(currentUser.uid);
         const sortedStories = activeStories.sort((a, b) => {
           const aSeen = a.viewers?.includes(currentUser.uid);
@@ -55,6 +63,10 @@ function Home() {
           return aSeen - bSeen;
         });
         setStories(sortedStories);
+
+        // Fetch my own stories
+        const myActiveStories = await getUserStories(currentUser.uid);
+        setMyStories(myActiveStories);
 
         const userChats = await getUserChats(currentUser.uid);
         const friendsList = userChats.map(chat => chat.otherUser).filter(user => user);
@@ -70,12 +82,94 @@ function Home() {
     fetchHomeData();
   }, []);
 
+  // --- Viewer Logic for Friends' Stories ---
+
+  const closeViewer = () => {
+    setViewerOpen(false);
+    clearTimeout(progressTimerRef.current);
+  };
+
+  const goToNextStory = () => {
+    if (currentStoryIndex < viewerStories.length - 1) {
+      setCurrentStoryIndex(prev => prev + 1);
+      setProgress(0);
+      startProgressTimer();
+    } else {
+      closeViewer();
+    }
+  };
+
+  const goToPrevStory = () => {
+    if (currentStoryIndex > 0) {
+      setCurrentStoryIndex(prev => prev - 1);
+      setProgress(0);
+      startProgressTimer();
+    }
+  };
+
+  const startProgressTimer = () => {
+    clearTimeout(progressTimerRef.current);
+    setProgress(0);
+    const duration = 5000;
+    const interval = 50;
+    let currentProgress = 0;
+    progressTimerRef.current = setInterval(() => {
+      currentProgress += (interval / duration) * 100;
+      setProgress(Math.min(currentProgress, 100));
+      if (currentProgress >= 100) {
+        clearTimeout(progressTimerRef.current);
+        setTimeout(() => goToNextStory(), 300);
+      }
+    }, interval);
+  };
+
+  const openViewer = async (storyList, index) => {
+    setViewerStories(storyList);
+    setCurrentStoryIndex(index);
+    setViewerOpen(true);
+    setProgress(0);
+    
+    const story = storyList[index];
+    if (story && story.ownerId !== auth.currentUser.uid) {
+      try {
+        await viewStory(story.id, auth.currentUser.uid);
+        loadStories();
+      } catch (error) {
+        console.error("Error viewing story:", error);
+      }
+    }
+    startProgressTimer();
+  };
+
+  const loadStories = async () => {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      const activeStories = await getActiveStories(currentUser.uid);
+      const sortedStories = activeStories.sort((a, b) => {
+        const aSeen = a.viewers?.includes(currentUser.uid);
+        const bSeen = b.viewers?.includes(currentUser.uid);
+        return aSeen - bSeen;
+      });
+      setStories(sortedStories);
+    } catch (error) {
+      console.error("Error loading stories:", error);
+    }
+  };
+
+  // --- Upload Modal Logic ---
+
   const handleProfileClick = () => {
-    setShowUploadModal(true);
-    setUploadedFile(null);
-    setUploadProgress(0);
-    setUploadingStory(false);
-    fileInputRef.current.value = "";
+    // If you have stories, open viewer; else open upload modal
+    if (myStories.length > 0) {
+      openViewer(myStories, 0);
+    } else {
+      setShowUploadModal(true);
+      setUploadedFile(null);
+      setUploadProgress(0);
+      setUploadingStory(false);
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleFileSelect = (e) => {
@@ -122,7 +216,7 @@ function Home() {
       toast.success("Story posted to Close Friends!");
       setTimeout(() => {
         setShowUploadModal(false);
-        loadStories();
+        loadMyStories();
         setUploadedFile(null);
         setUploadProgress(0);
         setUploadingStory(false);
@@ -135,26 +229,19 @@ function Home() {
     }
   };
 
+  const loadMyStories = async () => {
+    try {
+      const myActiveStories = await getUserStories(auth.currentUser.uid);
+      setMyStories(myActiveStories);
+    } catch (error) {
+      console.error("Error loading my stories:", error);
+    }
+  };
+
   const toggleFriendSelection = (uid) => {
     setSelectedFriends(prev => 
       prev.includes(uid) ? prev.filter(id => id !== uid) : [...prev, uid]
     );
-  };
-
-  const loadStories = async () => {
-    try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
-      const activeStories = await getActiveStories(currentUser.uid);
-      const sortedStories = activeStories.sort((a, b) => {
-        const aSeen = a.viewers?.includes(currentUser.uid);
-        const bSeen = b.viewers?.includes(currentUser.uid);
-        return aSeen - bSeen;
-      });
-      setStories(sortedStories);
-    } catch (error) {
-      console.error("Error loading stories:", error);
-    }
   };
 
   const handleLogout = async () => {
@@ -228,7 +315,7 @@ function Home() {
           </div>
           <div className="stories-horizontal">
             
-            {/* ONLY OWN PROFILE CIRCLE (Always shows your profile + plus icon) */}
+            {/* OWN PROFILE CIRCLE - Click opens my stories or upload */}
             <div className="story-circle own-story" onClick={handleProfileClick}>
               <div className="story-circle-border">
                 <img
@@ -243,7 +330,7 @@ function Home() {
             
             <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="image/*" style={{ display: 'none' }} />
 
-            {/* FRIENDS STORIES (Excluding own stories) */}
+            {/* FRIENDS STORIES */}
             {stories.filter(story => story.ownerId !== auth.currentUser.uid).length === 0 ? (
               <p className="no-stories-home">No friends' stories.</p>
             ) : (
@@ -253,7 +340,7 @@ function Home() {
                   <div
                     key={story.id}
                     className={`story-circle ${isSeen ? 'seen' : ''}`}
-                    onClick={() => openViewer(index)}
+                    onClick={() => openViewer(stories.filter(s => s.ownerId !== auth.currentUser.uid), index)}
                   >
                     <div className="story-circle-border">
                       <img
@@ -332,6 +419,51 @@ function Home() {
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== FULL SCREEN STORY VIEWER ===== */}
+      {viewerOpen && viewerStories.length > 0 && (
+        <div className="story-viewer-overlay" onClick={closeViewer}>
+          <div className="story-viewer-content" onClick={(e) => e.stopPropagation()}>
+            
+            {/* Progress Lines */}
+            <div className="story-progress-container">
+              {viewerStories.map((_, idx) => (
+                <div key={idx} className={`story-progress-bar ${idx < currentStoryIndex ? 'completed' : ''} ${idx === currentStoryIndex ? 'active' : ''}`}>
+                  <div className="story-progress-fill" style={{ width: idx === currentStoryIndex ? `${progress}%` : idx < currentStoryIndex ? '100%' : '0%' }}></div>
+                </div>
+              ))}
+            </div>
+
+            {/* Story Image */}
+            <img src={viewerStories[currentStoryIndex].mediaURL} alt="Story" className="story-viewer-image" />
+
+            {/* Top Info */}
+            <div className="story-viewer-top">
+              <div className="story-viewer-user">
+                <img src={viewerStories[currentStoryIndex].owner.photoURL || "https://via.placeholder.com/30"} alt="Profile" className="story-viewer-avatar" />
+                <div>
+                  <p className="story-viewer-username">@{viewerStories[currentStoryIndex].owner.username}</p>
+                  <p className="story-viewer-time">Just now</p>
+                </div>
+              </div>
+              <button onClick={closeViewer} className="story-viewer-btn close-btn"><FiX size={24} /></button>
+            </div>
+
+            {/* Navigation Arrows */}
+            {currentStoryIndex > 0 && (
+              <div className="story-nav left" onClick={(e) => { e.stopPropagation(); goToPrevStory(); }}><FiChevronLeft size={40} /></div>
+            )}
+            {currentStoryIndex < viewerStories.length - 1 && (
+              <div className="story-nav right" onClick={(e) => { e.stopPropagation(); goToNextStory(); }}><FiChevronRight size={40} /></div>
+            )}
+
+            {/* Touch Areas for mobile */}
+            <div className="story-touch-left" onClick={(e) => { e.stopPropagation(); goToPrevStory(); }}></div>
+            <div className="story-touch-right" onClick={(e) => { e.stopPropagation(); goToNextStory(); }}></div>
+
           </div>
         </div>
       )}
