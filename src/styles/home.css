@@ -307,64 +307,6 @@
   color: #666;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .home-container {
-    flex-direction: column;
-  }
-
-  .sidebar {
-    width: 100%;
-    height: auto;
-    border-right: none;
-    border-bottom: 1px solid #e0e0e0;
-    flex-direction: row;
-  }
-
-  .sidebar-header {
-    flex: 0 0 auto;
-    border-right: 1px solid #e0e0e0;
-    border-bottom: none;
-  }
-
-  .sidebar-nav {
-    flex-direction: row;
-    overflow-x: auto;
-    gap: 0;
-  }
-
-  .nav-item {
-    flex: 0 0 auto;
-    border-radius: 0;
-    border-right: 1px solid #e0e0e0;
-  }
-
-  .sidebar-user {
-    flex: 0 0 auto;
-    border-top: none;
-    border-left: 1px solid #e0e0e0;
-  }
-
-  .main-content {
-    flex: 1;
-  }
-}
-
-@media (max-width: 480px) {
-  .sidebar-header {
-    min-width: 120px;
-  }
-
-  .chat-item {
-    padding: 10px 12px;
-  }
-
-  .chat-time {
-    display: none;
-  }
-}
-/* Add this to the END of src/styles/home.css */
-
 /* ===== HOME PAGE - INSTAGRAM STYLE ===== */
 
 /* Stories Section */
@@ -564,7 +506,7 @@
 .no-groups-home a {
   color: #667eea;
   font-weight: 600;
-}/* Add to END of src/styles/home.css */
+}
 
 /* Back Button in Header */
 .back-btn-header {
@@ -618,4 +560,101 @@
 
 .group-item:hover {
   background: #f0f3ff;
+}
+
+/* ===== RESPONSIVE MOBILE FIXES ===== */
+@media (max-width: 768px) {
+  .home-container {
+    flex-direction: column;
+    height: auto;
+    overflow-x: hidden;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid #e0e0e0;
+    flex-direction: row;
+    padding: 5px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+  }
+
+  .sidebar-header {
+    flex: 0 0 auto;
+    border-right: none;
+    border-bottom: none;
+  }
+  .sidebar-header h1 {
+    font-size: 20px;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 5px;
+    padding: 0 10px;
+    flex: 1;
+    justify-content: flex-end;
+  }
+
+  .nav-item {
+    flex: 0 0 auto;
+    border-radius: 8px;
+    border: none;
+    padding: 8px 10px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .nav-item span {
+    display: none;
+  }
+
+  .sidebar-user {
+    flex: 0 0 auto;
+    border-top: none;
+    border-left: none;
+    padding: 5px;
+  }
+  .sidebar-user img {
+    width: 32px;
+    height: 32px;
+  }
+  .sidebar-user .user-handle,
+  .sidebar-user .user-name {
+    display: none;
+  }
+
+  .main-content {
+    flex: 1;
+    padding: 10px;
+    height: calc(100vh - 80px);
+    overflow-y: auto;
+  }
+
+  .content-header h2 {
+    font-size: 20px;
+  }
+
+  .chat-item {
+    padding: 10px 12px;
+  }
+  .chat-time {
+    display: none;
+  }
+
+  .stories-horizontal {
+    gap: 10px;
+  }
+  .story-circle-border {
+    width: 56px;
+    height: 56px;
+  }
+  .story-circle-img {
+    width: 50px;
+    height: 50px;
+  }
 }

@@ -1,5 +1,4 @@
 // src/services/authService.js
-// src/services/authService.js
 import {
   signInWithPopup,
   signOut,
@@ -10,8 +9,12 @@ import {
   getDoc,
   setDoc,
   updateDoc,
-  deleteDoc
-} from "firebase/firestore"; // Removed collection, query, where, getDocs, limit
+  deleteDoc,
+  collection,
+  query,
+  where,
+  getDocs
+} from "firebase/firestore";
 import { auth, db, googleProvider } from "../config/firebase";
 
 // Sign in with Google
@@ -147,15 +150,26 @@ export const searchUserByUsername = async (username) => {
   }
 };
 
-// Delete account (user profile + username reservation + auth account)
-export const deleteAccount = async (uid, username) => {
+// Delete account (user profile + username reservation + auth account) - FIXED
+export const deleteAccount = async (uid) => {
   try {
-    if (username) {
-      await deleteDoc(doc(db, "usernames", username.trim().toLowerCase()));
-    }
-
+    // Step 1: Delete the user's Firestore document
     await deleteDoc(doc(db, "users", uid));
 
+    // Step 2: Find and delete the username document
+    try {
+      const usernamesRef = collection(db, "usernames");
+      const q = query(usernamesRef, where("uid", "==", uid));
+      const querySnapshot = await getDocs(q);
+      
+      querySnapshot.forEach(async (docSnap) => {
+        await deleteDoc(doc(db, "usernames", docSnap.id));
+      });
+    } catch (err) {
+      console.log("Error deleting username entry:", err);
+    }
+
+    // Step 3: Delete the Firebase Auth user
     if (auth.currentUser) {
       await deleteUser(auth.currentUser);
     }
