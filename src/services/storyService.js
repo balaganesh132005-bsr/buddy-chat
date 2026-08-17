@@ -1,195 +1,167 @@
-// src/services/storyService.js
-import {
-  collection,
-  doc,
-  setDoc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-  deleteDoc,
-  updateDoc,
-  arrayUnion,
-  onSnapshot
-} from "firebase/firestore";
-import { db } from "../config/firebase";
+// src/services/storageService.js
+// CLOUDINARY VERSION - No Firebase Storage needed!
 
-// Create story
-export const createStory = async (userId, storyData) => {
-  try {
-    const storiesRef = collection(db, "stories");
-    const storyId = doc(storiesRef).id;
+const CLOUDINARY_CLOUD_NAME = "xs7qhkuq";
+const CLOUDINARY_UPLOAD_PRESET = "socialchat_uploads";
 
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
+// Compress image before upload
+const compressImage = (file, quality = 0.8) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const maxWidth = 1200;
+        const maxHeight = 1200;
+        let width = img.width;
+        let height = img.height;
 
-    await setDoc(doc(storiesRef, storyId), {
-      storyId,
-      ownerId: userId,
-      mediaURL: storyData.mediaURL,
-      mediaType: storyData.mediaType || "photo",
-      text: storyData.text || "",
-      createdAt: now,
-      expiresAt: expiresAt,
-      viewers: [],
-      viewCount: 0
-    });
+        if (width > height) {
+          if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width *= maxHeight / height;
+            height = maxHeight;
+          }
+        }
 
-    return storyId;
-  } catch (error) {
-    throw new Error(error.message);
-  }
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob(
+          (blob) => {
+            resolve(blob);
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+    };
+  });
 };
 
-// Get all active stories
-export const getActiveStories = async () => {
+// Generic upload function to Cloudinary
+const uploadToCloudinary = async (file, folder = "general") => {
   try {
-    const q = query(
-      collection(db, "stories"),
-      where("expiresAt", ">", new Date())
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+    formData.append("folder", folder);
+
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+      {
+        method: "POST",
+        body: formData
+      }
     );
 
-    const snapshot = await getDocs(q);
-    const stories = [];
-
-    for (const storyDoc of snapshot.docs) {
-      const storyData = storyDoc.data();
-      const ownerDoc = await getDoc(doc(db, "users", storyData.ownerId));
-      stories.push({
-        id: storyDoc.id,
-        ...storyData,
-        owner: ownerDoc.data() || {}
-      });
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("Cloudinary error details:", errorData);
+      throw new Error("Upload failed");
     }
 
-    stories.sort((a, b) => {
-      const aTime = a.createdAt?.toDate?.() || new Date(0);
-      const bTime = b.createdAt?.toDate?.() || new Date(0);
-      return bTime - aTime;
+    const data = await response.json();
+    return data.secure_url;
+  } catch (error) {
+    console.error("Cloudinary upload error:", error);
+    throw new Error("Failed to upload image");
+  }
+};
+
+// Upload profile photo
+export const uploadProfilePhoto = async (userId, file) => {
+  try {
+    const compressedBlob = await compressImage(file, 0.8);
+    const compressedFile = new File([compressedBlob], `profile-${userId}.jpg`, {
+      type: "image/jpeg"
     });
 
-    return stories;
+    const downloadURL = await uploadToCloudinary(compressedFile, "profile-photos");
+    return downloadURL;
   } catch (error) {
     throw new Error(error.message);
   }
 };
 
-// Get user's stories
-export const getUserStories = async (userId) => {
+// Upload chat image
+export const uploadChatImage = async (chatId, senderId, file) => {
   try {
-    const q = query(
-      collection(db, "stories"),
-      where("ownerId", "==", userId),
-      where("expiresAt", ">", new Date())
+    const compressedBlob = await compressImage(file, 0.7);
+    const timestamp = Date.now();
+    const compressedFile = new File(
+      [compressedBlob],
+      `chat-${chatId}-${senderId}-${timestamp}.jpg`,
+      { type: "image/jpeg" }
     );
 
-    const snapshot = await getDocs(q);
-    const stories = [];
-
-    snapshot.forEach((doc) => {
-      stories.push({ id: doc.id, ...doc.data() });
-    });
-
-    stories.sort((a, b) => {
-      const aTime = a.createdAt?.toDate?.() || new Date(0);
-      const bTime = b.createdAt?.toDate?.() || new Date(0);
-      return bTime - aTime;
-    });
-
-    return stories;
+    const downloadURL = await uploadToCloudinary(compressedFile, `chat-images/${chatId}`);
+    return downloadURL;
   } catch (error) {
     throw new Error(error.message);
   }
 };
 
-// View story
-export const viewStory = async (storyId, userId) => {
+// Upload group image
+export const uploadGroupImage = async (groupId, senderId, file) => {
   try {
-    const storyRef = doc(db, "stories", storyId);
-    const storyDoc = await getDoc(storyRef);
-
-    if (storyDoc.exists()) {
-      const viewers = storyDoc.data().viewers || [];
-      
-      if (!viewers.includes(userId)) {
-        await updateDoc(storyRef, {
-          viewers: arrayUnion(userId),
-          viewCount: (storyDoc.data().viewCount || 0) + 1
-        });
-      }
-    }
-  } catch (error) {
-    console.error("Error viewing story:", error);
-  }
-};
-
-// Delete story
-export const deleteStory = async (storyId) => {
-  try {
-    await deleteDoc(doc(db, "stories", storyId));
-    return true;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
-
-// Listen to stories (real-time)
-export const listenToStories = (callback) => {
-  try {
-    const q = query(
-      collection(db, "stories"),
-      where("expiresAt", ">", new Date())
+    const compressedBlob = await compressImage(file, 0.7);
+    const timestamp = Date.now();
+    const compressedFile = new File(
+      [compressedBlob],
+      `group-${groupId}-${senderId}-${timestamp}.jpg`,
+      { type: "image/jpeg" }
     );
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
-      const stories = [];
-
-      for (const storyDoc of snapshot.docs) {
-        const storyData = storyDoc.data();
-        const ownerDoc = await getDoc(doc(db, "users", storyData.ownerId));
-        stories.push({
-          id: storyDoc.id,
-          ...storyData,
-          owner: ownerDoc.data() || {}
-        });
-      }
-
-      stories.sort((a, b) => {
-        const aTime = a.createdAt?.toDate?.() || new Date(0);
-        const bTime = b.createdAt?.toDate?.() || new Date(0);
-        return bTime - aTime;
-      });
-
-      callback(stories);
-    });
-
-    return unsubscribe;
+    const downloadURL = await uploadToCloudinary(compressedFile, `group-images/${groupId}`);
+    return downloadURL;
   } catch (error) {
-    console.error("Error listening to stories:", error);
+    throw new Error(error.message);
   }
 };
 
-// Get story viewers
-export const getStoryViewers = async (storyId) => {
+// Upload story media
+export const uploadStoryMedia = async (userId, file, fileType = "photo") => {
   try {
-    const storyDoc = await getDoc(doc(db, "stories", storyId));
-    
-    if (!storyDoc.exists()) return [];
+    if (fileType === "photo") {
+      const compressedBlob = await compressImage(file, 0.8);
+      const compressedFile = new File(
+        [compressedBlob],
+        `story-${userId}-${Date.now()}.jpg`,
+        { type: "image/jpeg" }
+      );
 
-    const viewers = storyDoc.data().viewers || [];
-    const viewerList = [];
-
-    for (const viewerId of viewers) {
-      const userDoc = await getDoc(doc(db, "users", viewerId));
-      if (userDoc.exists()) {
-        viewerList.push({
-          uid: viewerId,
-          ...userDoc.data()
-        });
-      }
+      const downloadURL = await uploadToCloudinary(compressedFile, `stories/${userId}`);
+      return downloadURL;
+    } else {
+      const downloadURL = await uploadToCloudinary(file, `stories/${userId}`);
+      return downloadURL;
     }
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
 
-    return viewerList;
+// Upload group photo
+export const uploadGroupPhoto = async (groupId, file) => {
+  try {
+    const compressedBlob = await compressImage(file, 0.8);
+    const compressedFile = new File([compressedBlob], `group-photo-${groupId}.jpg`, {
+      type: "image/jpeg"
+    });
+
+    const downloadURL = await uploadToCloudinary(compressedFile, "group-photos");
+    return downloadURL;
   } catch (error) {
     throw new Error(error.message);
   }
