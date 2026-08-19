@@ -27,7 +27,7 @@ export const googleLogin = async () => {
   }
 };
 
-// Check if user document already exists (and has a username)
+// Check if user document already exists
 export const checkUserExists = async (uid) => {
   try {
     const userRef = doc(db, "users", uid);
@@ -61,12 +61,11 @@ export const checkUsernameAvailability = async (username) => {
   }
 };
 
-// Create username + user profile document
+// Create username + user profile
 export const createUsername = async (uid, username, userData) => {
   try {
     const cleanUsername = username.trim().toLowerCase();
 
-    // Double-check availability before writing
     const isAvailable = await checkUsernameAvailability(cleanUsername);
     if (!isAvailable) {
       throw new Error("Username is no longer available");
@@ -74,7 +73,6 @@ export const createUsername = async (uid, username, userData) => {
 
     const now = new Date();
 
-    // Create the user profile document
     await setDoc(doc(db, "users", uid), {
       uid: uid,
       username: cleanUsername,
@@ -86,7 +84,6 @@ export const createUsername = async (uid, username, userData) => {
       updatedAt: now
     });
 
-    // Reserve the username (maps username -> uid, for lookups + uniqueness)
     await setDoc(doc(db, "usernames", cleanUsername), {
       uid: uid,
       username: cleanUsername,
@@ -99,7 +96,7 @@ export const createUsername = async (uid, username, userData) => {
   }
 };
 
-// Update user profile fields
+// Update user profile
 export const updateUserProfile = async (uid, updates) => {
   try {
     const userRef = doc(db, "users", uid);
@@ -113,7 +110,7 @@ export const updateUserProfile = async (uid, updates) => {
   }
 };
 
-// Log out
+// Logout
 export const logout = async () => {
   try {
     await signOut(auth);
@@ -123,7 +120,7 @@ export const logout = async () => {
   }
 };
 
-// Search for a user by exact username
+// Search user by username
 export const searchUserByUsername = async (username) => {
   try {
     const cleanUsername = username.trim().toLowerCase();
@@ -150,26 +147,31 @@ export const searchUserByUsername = async (username) => {
   }
 };
 
-// Delete account (user profile + username reservation + auth account) - FIXED
+// 🔥 FIX: Delete account
 export const deleteAccount = async (uid) => {
   try {
-    // Step 1: Delete the user's Firestore document
-    await deleteDoc(doc(db, "users", uid));
-
-    // Step 2: Find and delete the username document
-    try {
-      const usernamesRef = collection(db, "usernames");
-      const q = query(usernamesRef, where("uid", "==", uid));
-      const querySnapshot = await getDocs(q);
-      
-      querySnapshot.forEach(async (docSnap) => {
-        await deleteDoc(doc(db, "usernames", docSnap.id));
-      });
-    } catch (err) {
-      console.log("Error deleting username entry:", err);
+    // Get the username first
+    const userRef = doc(db, "users", uid);
+    const userDoc = await getDoc(userRef);
+    let username = null;
+    if (userDoc.exists()) {
+      username = userDoc.data().username;
     }
 
-    // Step 3: Delete the Firebase Auth user
+    // Delete user document
+    await deleteDoc(userRef);
+
+    // Delete username document
+    if (username) {
+      try {
+        const usernameRef = doc(db, "usernames", username);
+        await deleteDoc(usernameRef);
+      } catch (err) {
+        console.log("Username document already deleted");
+      }
+    }
+
+    // Delete auth user
     if (auth.currentUser) {
       await deleteUser(auth.currentUser);
     }
@@ -177,16 +179,5 @@ export const deleteAccount = async (uid) => {
     return true;
   } catch (error) {
     throw new Error(error.message);
-  }
-};
-// Add this function to src/services/authService.js
-export const updateLastSeen = async (uid) => {
-  try {
-    const userRef = doc(db, "users", uid);
-    await updateDoc(userRef, {
-      lastSeen: new Date()
-    });
-  } catch (error) {
-    console.error("Error updating last seen:", error);
   }
 };
