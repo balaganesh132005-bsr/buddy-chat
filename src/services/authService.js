@@ -1,4 +1,4 @@
-// src/services/authService.js
+// src/services/authService.js - Clean
 import {
   signInWithPopup,
   signOut,
@@ -9,11 +9,7 @@ import {
   getDoc,
   setDoc,
   updateDoc,
-  deleteDoc,
-  collection,
-  query,
-  where,
-  getDocs
+  deleteDoc
 } from "firebase/firestore";
 import { auth, db, googleProvider } from "../config/firebase";
 
@@ -110,6 +106,18 @@ export const updateUserProfile = async (uid, updates) => {
   }
 };
 
+// 🔥 Add updateLastSeen
+export const updateLastSeen = async (uid) => {
+  try {
+    const userRef = doc(db, "users", uid);
+    await updateDoc(userRef, {
+      lastSeen: new Date()
+    });
+  } catch (error) {
+    console.error("Error updating last seen:", error);
+  }
+};
+
 // Logout
 export const logout = async () => {
   try {
@@ -147,10 +155,9 @@ export const searchUserByUsername = async (username) => {
   }
 };
 
-// 🔥 FIX: Delete account
+// Delete account
 export const deleteAccount = async (uid) => {
   try {
-    // Get the username first
     const userRef = doc(db, "users", uid);
     const userDoc = await getDoc(userRef);
     let username = null;
@@ -158,10 +165,8 @@ export const deleteAccount = async (uid) => {
       username = userDoc.data().username;
     }
 
-    // Delete user document
     await deleteDoc(userRef);
 
-    // Delete username document
     if (username) {
       try {
         const usernameRef = doc(db, "usernames", username);
@@ -171,7 +176,6 @@ export const deleteAccount = async (uid) => {
       }
     }
 
-    // Delete auth user
     if (auth.currentUser) {
       await deleteUser(auth.currentUser);
     }
@@ -179,15 +183,5 @@ export const deleteAccount = async (uid) => {
     return true;
   } catch (error) {
     throw new Error(error.message);
-  }
-};// 🔥 Add this function at the end of src/services/authService.js
-export const updateLastSeen = async (uid) => {
-  try {
-    const userRef = doc(db, "users", uid);
-    await updateDoc(userRef, {
-      lastSeen: new Date()
-    });
-  } catch (error) {
-    console.error("Error updating last seen:", error);
   }
 };
