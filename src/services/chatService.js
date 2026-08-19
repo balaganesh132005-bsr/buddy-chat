@@ -1,4 +1,4 @@
-// src/services/chatService.js
+// src/services/chatService.js - With Desktop Notifications
 import { 
   collection, 
   doc, 
@@ -8,14 +8,31 @@ import {
   query, 
   where, 
   orderBy,
-  limit,
-  startAfter,
   onSnapshot,
   updateDoc,
-  arrayUnion,
-  writeBatch
+  arrayUnion
 } from "firebase/firestore";
 import { db } from "../config/firebase";
+import toast from "react-hot-toast";
+
+// 🔥 Request Notification Permission on app start
+if (typeof window !== "undefined" && "Notification" in window) {
+  if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+    Notification.requestPermission();
+  }
+}
+
+// Send notification helper
+const sendDesktopNotification = (title, body, icon = "/logo192.png") => {
+  if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+    new Notification(title, {
+      body,
+      icon,
+      tag: "new-message",
+      requireInteraction: true
+    });
+  }
+};
 
 // Get or create private chat
 export const getOrCreatePrivateChat = async (user1Id, user2Id) => {
@@ -41,7 +58,7 @@ export const getOrCreatePrivateChat = async (user1Id, user2Id) => {
   }
 };
 
-// Send message
+// Send message (with notification)
 export const sendMessage = async (chatId, senderId, messageData) => {
   try {
     const messagesRef = collection(db, "chats", chatId, "messages");
@@ -50,7 +67,7 @@ export const sendMessage = async (chatId, senderId, messageData) => {
     await setDoc(doc(messagesRef, messageId), {
       messageId,
       senderId,
-      type: messageData.type || "text", // "text" or "image"
+      type: messageData.type || "text",
       text: messageData.text || "",
       mediaURL: messageData.mediaURL || "",
       timestamp: new Date(),
@@ -58,11 +75,37 @@ export const sendMessage = async (chatId, senderId, messageData) => {
       deleted: false
     });
 
-    // Update chat lastMessage
     await updateDoc(doc(db, "chats", chatId), {
       lastMessage: messageData.text || "📷 Photo",
       updatedAt: new Date()
     });
+
+    // 🔥 Send notification to the other user
+    try {
+      const chatDoc = await getDoc(doc(db, "chats", chatId));
+      if (chatDoc.exists()) {
+        const participants = chatDoc.data().participants;
+        const otherUserId = participants.find(id => id !== senderId);
+        
+        if (otherUserId) {
+          const otherUserDoc = await getDoc(doc(db, "users", otherUserId));
+          if (otherUserDoc.exists()) {
+            const otherUser = otherUserDoc.data();
+            const senderDoc = await getDoc(doc(db, "users", senderId));
+            const senderName = senderDoc.exists() ? senderDoc.data().displayName : "Someone";
+            
+            const messagePreview = messageData.text || "📷 Image";
+            sendDesktopNotification(
+              `📩 ${senderName}`,
+              messagePreview,
+              otherUser.photoURL || "/logo192.png"
+            );
+          }
+        }
+      }
+    } catch (notifError) {
+      console.error("Notification error:", notifError);
+    }
 
     return messageId;
   } catch (error) {
@@ -137,16 +180,19 @@ export const getUserChats = async (userId) => {
     for (const chatDoc of snapshot.docs) {
       const data = chatDoc.data();
       if (data.type === "private") {
-        // Get other user's info
         const otherUserId = data.participants.find((id) => id !== userId);
-        const { getDoc, doc } = await import("firebase/firestore");
-        const otherUserDoc = await getDoc(doc(db, "users", otherUserId));
-        
-        chats.push({
-          id: chatDoc.id,
-          ...data,
-          otherUser: otherUserDoc.data() || {}
-        });
+        if (otherUserId) {
+          const otherUserDoc = await getDoc(doc(db, "users", otherUserId));
+          if (otherUserDoc.exists()) {
+            chats.push({
+              id: chatDoc.id,
+              ...data,
+              otherUser: otherUserDoc.data() || {}
+            });
+          } else {
+            console.warn("Other user document not found:", otherUserId);
+          }
+        }
       } else if (data.type === "group") {
         chats.push({
           id: chatDoc.id,
@@ -163,7 +209,9 @@ export const getUserChats = async (userId) => {
 
     return chats;
   } catch (error) {
-    throw new Error(error.message);
+    console.error("Error fetching user chats:", error);
+    toast.error("Chat error: " + error.message);
+    return [];
   }
 };
 

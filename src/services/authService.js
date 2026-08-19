@@ -179,3 +179,14 @@ export const deleteAccount = async (uid) => {
     throw new Error(error.message);
   }
 };
+// Add this function to src/services/authService.js
+export const updateLastSeen = async (uid) => {
+  try {
+    const userRef = doc(db, "users", uid);
+    await updateDoc(userRef, {
+      lastSeen: new Date()
+    });
+  } catch (error) {
+    console.error("Error updating last seen:", error);
+  }
+};

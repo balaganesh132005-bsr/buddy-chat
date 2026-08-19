@@ -1,4 +1,4 @@
-// src/services/storyService.js - Full Clean
+// src/services/storyService.js - Fixed getAllowedStories
 import {
   collection,
   doc,
@@ -32,7 +32,8 @@ export const createStory = async (userId, storyData) => {
       expiresAt: expiresAt,
       viewers: [],
       viewCount: 0,
-      likes: []
+      likes: [],
+      allowedViewers: storyData.allowedViewers || []
     });
     return storyId;
   } catch (error) {
@@ -40,7 +41,7 @@ export const createStory = async (userId, storyData) => {
   }
 };
 
-// Get all active stories
+// Get all active stories - FIXED
 export const getActiveStories = async (currentUserId) => {
   try {
     const q = query(collection(db, "stories"), where("expiresAt", ">", new Date()));
@@ -49,6 +50,20 @@ export const getActiveStories = async (currentUserId) => {
 
     for (const storyDoc of snapshot.docs) {
       const storyData = storyDoc.data();
+      
+      // 🔥 Important Privacy Check
+      if (storyData.ownerId !== currentUserId) {
+        // If it's not the owner's story, check allowedViewers
+        const allowed = storyData.allowedViewers || [];
+        if (allowed.length > 0) {
+          // If allowed list is not empty, current user MUST be in it
+          if (!allowed.includes(currentUserId)) {
+            continue; // Skip this story
+          }
+        }
+        // If allowed list is empty, it's public (everyone can see)
+      }
+
       let ownerData = {};
       try {
         const ownerDoc = await getDoc(doc(db, "users", storyData.ownerId));

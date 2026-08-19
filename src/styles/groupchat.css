@@ -1,91 +1,35 @@
-/* src/styles/groupchat.css - Modern Classic Style */
+/* src/styles/groupchat.css - Full CSS */
 
-/* ===== MODERN GROUP CHAT CONTAINER ===== */
 .groupchat-container-modern {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #f5f7fb;
-  position: relative;
+  background: #f0f2f5;
 }
 
-/* ===== MODERN HEADER ===== */
 .groupchat-header-modern {
   display: flex;
   align-items: center;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
-  z-index: 10;
-  position: sticky;
-  top: 0;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
 }
+.back-btn-modern { background: none; border: none; font-size: 22px; color: #333; padding: 8px; cursor: pointer; }
+.group-info-header-modern { flex: 1; display: flex; flex-direction: column; padding-left: 8px; }
+.group-name-modern { font-weight: 700; font-size: 16px; margin: 0; color: #1a1a1a; }
+.member-count-modern { font-size: 13px; color: #888; margin: 2px 0 0 0; }
+.members-btn-modern { background: #f0f2f5; border: none; padding: 10px; border-radius: 50%; cursor: pointer; color: #667eea; display: flex; align-items: center; }
 
-.back-btn-modern {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #333;
-  padding: 8px;
-  border-radius: 50%;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-}
-
-.back-btn-modern:hover {
-  background: #f0f0f0;
-}
-
-.group-info-header-modern {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding-left: 8px;
-}
-
-.group-name-modern {
-  font-weight: 700;
-  font-size: 16px;
-  margin: 0;
-  color: #1a1a1a;
-}
-
-.member-count-modern {
-  font-size: 13px;
-  color: #888;
-  margin: 2px 0 0 0;
-}
-
-.members-btn-modern {
-  background: #f0f2f5;
-  border: none;
-  padding: 10px;
-  border-radius: 50%;
-  cursor: pointer;
-  color: #667eea;
-  display: flex;
-  align-items: center;
-  transition: all 0.2s ease;
-}
-
-.members-btn-modern:hover {
-  background: #e4e6eb;
-}
-
-/* ===== MODERN MESSAGES ===== */
 .messages-container-modern {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 16px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: #f5f7fb;
+  background: #f0f2f5;
 }
-
 .no-messages-modern {
   display: flex;
   flex-direction: column;
@@ -95,193 +39,55 @@
   color: #999;
   text-align: center;
 }
-
-.empty-chat-icon {
-  font-size: 48px;
-  margin-bottom: 12px;
-}
-
 .message-wrapper {
   display: flex;
   align-items: flex-end;
   gap: 8px;
   max-width: 75%;
 }
+.message-wrapper.me { align-self: flex-end; flex-direction: row-reverse; }
+.message-wrapper.them { align-self: flex-start; }
+.msg-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.message-bubble { padding: 10px 14px; border-radius: 18px; position: relative; }
+.message-bubble.sent { background: #667eea; color: white; border-bottom-right-radius: 4px; }
+.message-bubble.received { background: white; color: #1a1a1a; border-bottom-left-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.message-text-modern { margin: 0; font-size: 15px; line-height: 1.4; word-wrap: break-word; }
+.message-image-modern { max-width: 240px; max-height: 300px; border-radius: 12px; object-fit: cover; }
+.message-time-modern { font-size: 10px; color: #aaa; margin-left: 8px; display: inline-block; }
+.delete-btn-modern { background: transparent; border: none; color: #ff6b6b; margin-left: 6px; cursor: pointer; display: none; }
+.message-bubble:hover .delete-btn-modern { display: inline-block; }
 
-.message-wrapper.me {
-  align-self: flex-end;
-  flex-direction: row-reverse;
-}
-
-.message-wrapper.them {
-  align-self: flex-start;
-}
-
-.msg-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-.message-bubble {
-  padding: 10px 14px;
-  border-radius: 18px;
-  position: relative;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-  transition: all 0.2s ease;
-}
-
-.message-bubble.sent {
-  background: #667eea;
-  color: white;
-  border-bottom-right-radius: 4px;
-}
-
-.message-bubble.received {
-  background: white;
-  color: #1a1a1a;
-  border-bottom-left-radius: 4px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-}
-
-.message-text-modern {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.4;
-  word-wrap: break-word;
-}
-
-.message-image-modern {
-  max-width: 240px;
-  max-height: 300px;
-  border-radius: 12px;
-  object-fit: cover;
-}
-
-.message-time-modern {
-  font-size: 10px;
-  color: rgba(0,0,0,0.4);
-  margin-left: 8px;
-  display: inline-block;
-  vertical-align: bottom;
-}
-
-.message-bubble.sent .message-time-modern {
-  color: rgba(255,255,255,0.6);
-}
-
-.message-bubble.received .message-time-modern {
-  color: rgba(0,0,0,0.3);
-}
-
-.delete-btn-modern {
-  background: rgba(255, 255, 255, 0.2);
-  color: #ff6b6b;
-  border: none;
-  padding: 4px 6px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: none;
-  margin-left: 6px;
-  font-size: 12px;
-}
-
-.message-bubble:hover .delete-btn-modern {
-  display: inline-block;
-}
-
-/* ===== MODERN INPUT ===== */
 .input-container-modern {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 16px 16px 16px;
+  padding: 12px 16px;
   background: white;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.02);
+  border-top: 1px solid #e0e0e0;
+  flex-shrink: 0;
 }
+.attach-btn-modern { background: #f0f2f5; border: none; color: #667eea; padding: 10px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.input-modern { flex: 1; border: 1px solid #e0e0e0; border-radius: 24px; padding: 10px 16px; font-size: 15px; outline: none; background: #f8f9fc; }
+.input-modern:focus { border-color: #667eea; background: white; }
+.send-btn-modern { background: #667eea; color: white; border: none; padding: 10px 12px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+.send-btn-modern:hover:not(:disabled) { transform: scale(1.05); background: #5568d3; }
+.send-btn-modern:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.attach-btn-modern {
-  background: #f0f2f5;
-  color: #667eea;
-  border: none;
-  padding: 10px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.attach-btn-modern:hover {
-  background: #e4e6eb;
-}
-
-.input-modern {
-  flex: 1;
-  border: 2px solid #eef0f4;
-  border-radius: 24px;
-  padding: 10px 16px;
-  font-size: 15px;
-  outline: none;
-  background: #f8f9fc;
-  transition: all 0.3s ease;
-}
-
-.input-modern:focus {
-  border-color: #667eea;
-  background: white;
-}
-
-.send-btn-modern {
-  background: #667eea;
-  color: white;
-  border: none;
-  padding: 10px 12px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-}
-
-.send-btn-modern:hover:not(:disabled) {
-  background: #5568d3;
-  transform: scale(1.05);
-}
-
-.send-btn-modern:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* ===== MODERN MEMBERS SIDEBAR ===== */
+/* 🔥 MEMBERS SIDEBAR - FULL CSS */
 .members-sidebar-modern {
   position: fixed;
   right: 0;
   top: 0;
-  width: 340px;
+  width: 320px;
   height: 100vh;
   background: white;
-  border-left: 1px solid rgba(0, 0, 0, 0.06);
+  border-left: 1px solid #e0e0e0;
   padding: 0;
   overflow-y: auto;
   z-index: 100;
-  box-shadow: -4px 0 20px rgba(0, 0, 0, 0.05);
+  box-shadow: -2px 0 10px rgba(0,0,0,0.05);
   display: flex;
   flex-direction: column;
-  animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
 }
 
 .sidebar-header-modern {
@@ -289,49 +95,19 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #e0e0e0;
   flex-shrink: 0;
 }
+.sidebar-header-modern h3 { margin: 0; font-size: 17px; color: #1a1a1a; font-weight: 700; }
+.close-sidebar-modern { background: #f0f2f5; border: none; cursor: pointer; color: #888; padding: 8px; border-radius: 50%; display: flex; align-items: center; }
+.close-sidebar-modern:hover { background: #e4e6eb; color: #333; }
 
-.sidebar-header-modern h3 {
-  margin: 0;
-  font-size: 17px;
-  color: #1a1a1a;
-  font-weight: 700;
-}
-
-.close-sidebar-modern {
-  background: #f0f2f5;
-  border: none;
-  cursor: pointer;
-  color: #888;
-  padding: 8px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-}
-
-.close-sidebar-modern:hover {
-  background: #e4e6eb;
-  color: #333;
-}
-
-/* Add Member Section */
 .add-member-section-modern {
   padding: 16px 20px;
   border-bottom: 1px solid #f0f0f0;
   flex-shrink: 0;
 }
-
-.add-member-section-modern label {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: #999;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
+.add-member-section-modern label { display: block; font-size: 12px; font-weight: 600; color: #999; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
 
 .member-search-box-modern {
   display: flex;
@@ -343,19 +119,11 @@
   border: 2px solid transparent;
   transition: all 0.3s ease;
 }
-
 .member-search-box-modern:focus-within {
   border-color: #667eea;
   background: white;
 }
-
-.member-search-box-modern input {
-  flex: 1;
-  background: none;
-  border: none;
-  outline: none;
-  font-size: 14px;
-}
+.member-search-box-modern input { flex: 1; background: none; border: none; outline: none; font-size: 14px; }
 
 .member-search-result-modern {
   display: flex;
@@ -369,43 +137,17 @@
   cursor: pointer;
   transition: all 0.2s ease;
 }
+.member-search-result-modern:hover { background: #f0f3ff; border-color: #667eea; }
+.member-search-result-modern img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
+.member-search-result-modern .result-info { flex: 1; }
+.member-search-result-modern .result-name { font-weight: 600; font-size: 14px; margin: 0; color: #1a1a1a; }
+.member-search-result-modern .result-handle { font-size: 12px; color: #999; margin: 2px 0 0 0; }
 
-.member-search-result-modern:hover {
-  background: #f0f3ff;
-  border-color: #667eea;
-}
-
-.member-search-result-modern img {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.member-search-result-modern .result-info {
-  flex: 1;
-}
-
-.member-search-result-modern .result-name {
-  font-weight: 600;
-  font-size: 14px;
-  margin: 0;
-  color: #1a1a1a;
-}
-
-.member-search-result-modern .result-handle {
-  font-size: 12px;
-  color: #999;
-  margin: 2px 0 0 0;
-}
-
-/* Members List */
 .members-list-modern {
   flex: 1;
   overflow-y: auto;
   padding: 10px 20px;
 }
-
 .member-item-modern {
   display: flex;
   align-items: center;
@@ -416,70 +158,19 @@
   margin-bottom: 8px;
   transition: all 0.2s ease;
 }
+.member-item-modern:hover { background: #f0f3ff; }
+.member-item-modern img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.member-info { flex: 1; }
+.member-name { font-weight: 600; font-size: 14px; margin: 0; color: #1a1a1a; }
+.member-handle { font-size: 12px; color: #999; margin: 2px 0 0 0; }
+.member-actions { display: flex; gap: 6px; align-items: center; }
+.owner-badge { font-size: 10px; background: #667eea; color: white; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+.remove-btn { background: #fee2e2; color: #ef4444; border: none; padding: 6px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.remove-btn:hover { background: #fecaca; }
 
-.member-item-modern:hover {
-  background: #f0f3ff;
-}
-
-.member-item-modern img {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.member-info {
-  flex: 1;
-}
-
-.member-name {
-  font-weight: 600;
-  font-size: 14px;
-  margin: 0;
-  color: #1a1a1a;
-}
-
-.member-handle {
-  font-size: 12px;
-  color: #999;
-  margin: 2px 0 0 0;
-}
-
-.member-actions {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.owner-badge {
-  font-size: 10px;
-  background: #667eea;
-  color: white;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-weight: 600;
-}
-
-.remove-btn {
-  background: #fee2e2;
-  color: #ef4444;
-  border: none;
-  padding: 6px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.remove-btn:hover {
-  background: #fecaca;
-}
-
-/* Leave Button */
 .leave-btn-modern {
-  background: #fee2e2;
-  color: #ef4444;
+  background: #ffe0e0;
+  color: #dc3545;
   border: none;
   padding: 12px 20px;
   border-radius: 12px;
@@ -489,28 +180,44 @@
   transition: all 0.3s ease;
   flex-shrink: 0;
 }
+.leave-btn-modern:hover { background: #ffc0c0; transform: translateY(-2px); }
 
+.groupchat-loading { display: flex; justify-content: center; align-items: center; height: 100vh; font-size: 16px; color: #666; background: #f0f2f5; }
+@media (max-width: 768px) { .members-sidebar-modern { width: 100%; height: calc(100vh - 50px); top: 50px; } }/* Add this to the END of src/styles/groupchat.css */
+
+/* 🔥 Leave Group & Delete Group Button Styles */
+.leave-btn-modern {
+  background: #ffe0e0;
+  color: #dc3545;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 16px 20px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  width: calc(100% - 40px);
+}
 .leave-btn-modern:hover {
-  background: #fecaca;
+  background: #ffc0c0;
   transform: translateY(-2px);
 }
 
-.groupchat-loading {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  font-size: 16px;
-  color: #666;
-  background: #f5f7fb;
+.delete-group-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 16px 20px;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+  width: calc(100% - 40px);
 }
-
-/* Responsive */
-@media (max-width: 768px) {
-  .members-sidebar-modern {
-    width: 100%;
-    position: fixed;
-    top: 0;
-    height: 100vh;
-  }
+.delete-group-btn:hover {
+  background: #c82333;
+  transform: translateY(-2px);
 }

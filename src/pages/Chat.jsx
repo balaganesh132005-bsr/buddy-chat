@@ -1,4 +1,4 @@
-// src/pages/Chats.jsx - Fixed CSS Classes
+// src/pages/Chats.jsx - Clean
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -28,7 +28,6 @@ function Chats() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searching, setSearching] = useState(false);
 
   useEffect(() => {
     const fetchChatsAndGroups = async () => {
@@ -58,11 +57,9 @@ function Chats() {
     setSearchQuery(query);
     if (!query.trim()) {
       setSearchResults([]);
-      setSearching(false);
       return;
     }
     try {
-      setSearching(true);
       const foundUser = await searchUserByUsername(query);
       if (foundUser && foundUser.uid !== auth.currentUser.uid) {
         setSearchResults([foundUser]);
@@ -71,8 +68,6 @@ function Chats() {
       }
     } catch (error) {
       console.error("Search error:", error);
-    } finally {
-      setSearching(false);
     }
   };
 
@@ -149,7 +144,7 @@ function Chats() {
       </div>
 
       {/* MAIN CONTENT */}
-      <div className="main-content-mobile chats-layout">
+      <div className="main-content-mobile">
         <div className="chats-header">
           <h2>Chats</h2>
           <button onClick={() => navigate("/groups")} className="chats-create-btn">

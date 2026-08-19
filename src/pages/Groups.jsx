@@ -1,4 +1,4 @@
-// src/pages/Groups.jsx - Clean Layout with Shared Sidebar
+// src/pages/Groups.jsx - Clean Search Layout
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -20,6 +20,7 @@ import {
   FiArrowLeft
 } from "react-icons/fi";
 import "../styles/home.css";
+import "../styles/groups.css";
 
 function Groups() {
   const navigate = useNavigate();
@@ -137,7 +138,7 @@ function Groups() {
   }
 
   return (
-    <div className="home-container">
+    <div className="groups-page-container">
       
       {/* DESKTOP SIDEBAR */}
       <div className="desktop-sidebar">
@@ -175,7 +176,6 @@ function Groups() {
           <h1>BuddyChat</h1>
         </div>
         <div className="mobile-nav-icons">
-          <Link to="/" className="mobile-icon"><FiHome size={22} /></Link>
           <Link to="/chats" className="mobile-icon"><FiMessageCircle size={22} /></Link>
           <Link to="/stories" className="mobile-icon"><FiImage size={22} /></Link>
           <Link to="/profile" className="mobile-icon"><FiUser size={22} /></Link>
@@ -185,7 +185,7 @@ function Groups() {
       </div>
 
       {/* MAIN CONTENT */}
-      <div className="main-content-mobile">
+      <div className="main-content-groups">
         <div className="groups-header">
           <div className="groups-title-area">
             <button onClick={() => navigate("/")} className="back-btn-groups"><FiArrowLeft size={20} /></button>
@@ -211,8 +211,11 @@ function Groups() {
               {searching && <p className="search-hint">Searching...</p>}
               {searchResult && (
                 <div className="member-search-result" onClick={() => handleAddMember(searchResult)}>
-                  <img src={searchResult.photoURL || "https://via.placeholder.com/32"} alt={searchResult.displayName} />
-                  <div className="result-info"><p className="result-name">{searchResult.displayName}</p><p className="result-handle">@{searchResult.username}</p></div>
+                  <img src={searchResult.photoURL || "https://via.placeholder.com/40"} alt={searchResult.displayName} />
+                  <div className="result-info">
+                    <p className="result-name">{searchResult.displayName}</p>
+                    <p className="result-handle">@{searchResult.username}</p>
+                  </div>
                   <FiUserPlus size={18} />
                 </div>
               )}
