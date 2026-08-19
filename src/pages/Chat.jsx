@@ -1,4 +1,4 @@
-// src/pages/Chats.jsx - Chats List Page (Full Complete)
+// src/pages/Chats.jsx - Clean
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
