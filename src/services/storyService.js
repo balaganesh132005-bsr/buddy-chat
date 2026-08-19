@@ -1,4 +1,4 @@
-// src/services/storyService.js
+// src/services/storyService.js - Full Clean
 import {
   collection,
   doc,
@@ -9,7 +9,8 @@ import {
   where,
   deleteDoc,
   updateDoc,
-  arrayUnion
+  arrayUnion,
+  arrayRemove
 } from "firebase/firestore";
 import { db } from "../config/firebase";
 
@@ -18,7 +19,6 @@ export const createStory = async (userId, storyData) => {
   try {
     const storiesRef = collection(db, "stories");
     const storyId = doc(storiesRef).id;
-
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
@@ -32,43 +32,39 @@ export const createStory = async (userId, storyData) => {
       expiresAt: expiresAt,
       viewers: [],
       viewCount: 0,
-      allowedViewers: storyData.allowedViewers || []
+      likes: []
     });
-
     return storyId;
   } catch (error) {
     throw new Error(error.message);
   }
 };
 
-// Get all active stories (Only for owner + allowedViewers)
+// Get all active stories
 export const getActiveStories = async (currentUserId) => {
   try {
-    const q = query(
-      collection(db, "stories"),
-      where("expiresAt", ">", new Date())
-    );
-
+    const q = query(collection(db, "stories"), where("expiresAt", ">", new Date()));
     const snapshot = await getDocs(q);
     const stories = [];
 
     for (const storyDoc of snapshot.docs) {
       const storyData = storyDoc.data();
-      
-      // Privacy Check
-      if (storyData.ownerId === currentUserId) {
-        // Owner always sees
-      } else if (storyData.allowedViewers && Array.isArray(storyData.allowedViewers) && storyData.allowedViewers.length > 0) {
-        if (!storyData.allowedViewers.includes(currentUserId)) {
-          continue;
+      let ownerData = {};
+      try {
+        const ownerDoc = await getDoc(doc(db, "users", storyData.ownerId));
+        if (ownerDoc.exists()) {
+          ownerData = ownerDoc.data();
+        } else {
+          ownerData = { displayName: "Unknown", username: "unknown", photoURL: "" };
         }
+      } catch (err) {
+        ownerData = { displayName: "Unknown", username: "unknown", photoURL: "" };
       }
 
-      const ownerDoc = await getDoc(doc(db, "users", storyData.ownerId));
       stories.push({
         id: storyDoc.id,
         ...storyData,
-        owner: ownerDoc.data() || {}
+        owner: ownerData
       });
     }
 
@@ -77,9 +73,9 @@ export const getActiveStories = async (currentUserId) => {
       const bTime = b.createdAt?.toDate?.() || new Date(0);
       return bTime - aTime;
     });
-
     return stories;
   } catch (error) {
+    console.error("Error fetching stories:", error);
     throw new Error(error.message);
   }
 };
@@ -87,27 +83,23 @@ export const getActiveStories = async (currentUserId) => {
 // Get user's OWN stories
 export const getUserStories = async (userId) => {
   try {
-    const q = query(
-      collection(db, "stories"),
-      where("ownerId", "==", userId),
-      where("expiresAt", ">", new Date())
-    );
-
+    const q = query(collection(db, "stories"), where("expiresAt", ">", new Date()));
     const snapshot = await getDocs(q);
     const stories = [];
-
     snapshot.forEach((doc) => {
-      stories.push({ id: doc.id, ...doc.data() });
+      const data = doc.data();
+      if (data.ownerId === userId) {
+        stories.push({ id: doc.id, ...data });
+      }
     });
-
     stories.sort((a, b) => {
       const aTime = a.createdAt?.toDate?.() || new Date(0);
       const bTime = b.createdAt?.toDate?.() || new Date(0);
       return bTime - aTime;
     });
-
     return stories;
   } catch (error) {
+    console.error("Error fetching user stories:", error);
     throw new Error(error.message);
   }
 };
@@ -117,10 +109,8 @@ export const viewStory = async (storyId, userId) => {
   try {
     const storyRef = doc(db, "stories", storyId);
     const storyDoc = await getDoc(storyRef);
-
     if (storyDoc.exists()) {
       const viewers = storyDoc.data().viewers || [];
-      
       if (!viewers.includes(userId)) {
         await updateDoc(storyRef, {
           viewers: arrayUnion(userId),
@@ -130,6 +120,28 @@ export const viewStory = async (storyId, userId) => {
     }
   } catch (error) {
     console.error("Error viewing story:", error);
+  }
+};
+
+// Like a story
+export const likeStory = async (storyId, userId) => {
+  try {
+    const storyRef = doc(db, "stories", storyId);
+    const storyDoc = await getDoc(storyRef);
+    if (storyDoc.exists()) {
+      const likes = storyDoc.data().likes || [];
+      if (likes.includes(userId)) {
+        await updateDoc(storyRef, {
+          likes: arrayRemove(userId)
+        });
+      } else {
+        await updateDoc(storyRef, {
+          likes: arrayUnion(userId)
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Error liking story:", error);
   }
 };
 
@@ -147,22 +159,15 @@ export const deleteStory = async (storyId) => {
 export const getStoryViewers = async (storyId) => {
   try {
     const storyDoc = await getDoc(doc(db, "stories", storyId));
-    
     if (!storyDoc.exists()) return [];
-
     const viewers = storyDoc.data().viewers || [];
     const viewerList = [];
-
     for (const viewerId of viewers) {
       const userDoc = await getDoc(doc(db, "users", viewerId));
       if (userDoc.exists()) {
-        viewerList.push({
-          uid: viewerId,
-          ...userDoc.data()
-        });
+        viewerList.push({ uid: viewerId, ...userDoc.data() });
       }
     }
-
     return viewerList;
   } catch (error) {
     throw new Error(error.message);
