@@ -1,4 +1,4 @@
-// src/services/chatService.js - No Index Required (Fixed Imports)
+// src/services/chatService.js - No Index Required (Fixed Import)
 import { 
   collection, 
   doc, 
@@ -72,6 +72,7 @@ export const sendMessage = async (chatId, senderId, messageData) => {
       updatedAt: new Date()
     });
 
+    // Send notification to OTHER user
     try {
       const chatDoc = await getDoc(doc(db, "chats", chatId));
       if (chatDoc.exists()) {
@@ -100,11 +101,12 @@ export const sendMessage = async (chatId, senderId, messageData) => {
   }
 };
 
-// Listen to messages (real-time)
+// 🔥 FIX: Listen to messages - No orderBy
 export const listenToMessages = (chatId, callback) => {
   try {
     const messagesRef = collection(db, "chats", chatId, "messages");
-    const q = query(messagesRef, orderBy("timestamp", "asc"));
+    // Removed orderBy - we sort in JavaScript
+    const q = query(messagesRef);
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const messages = [];
@@ -112,6 +114,12 @@ export const listenToMessages = (chatId, callback) => {
         if (!doc.data().deleted) {
           messages.push({ id: doc.id, ...doc.data() });
         }
+      });
+      // Sort by timestamp in JavaScript
+      messages.sort((a, b) => {
+        const aTime = a.timestamp?.toDate?.() || new Date(0);
+        const bTime = b.timestamp?.toDate?.() || new Date(0);
+        return aTime - bTime;
       });
       callback(messages);
     });
