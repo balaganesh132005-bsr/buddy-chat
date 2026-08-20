@@ -1,4 +1,4 @@
-// src/services/chatService.js - With Desktop Notifications
+// src/services/chatService.js - Fix Permissions
 import { 
   collection, 
   doc, 
@@ -15,26 +15,7 @@ import {
 import { db } from "../config/firebase";
 import toast from "react-hot-toast";
 
-// 🔥 Request Notification Permission on app start
-if (typeof window !== "undefined" && "Notification" in window) {
-  if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-    Notification.requestPermission();
-  }
-}
-
-// Send notification helper
-const sendDesktopNotification = (title, body, icon = "/logo192.png") => {
-  if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-    new Notification(title, {
-      body,
-      icon,
-      tag: "new-message",
-      requireInteraction: true
-    });
-  }
-};
-
-// Get or create private chat
+// Get or create private chat - FIXED
 export const getOrCreatePrivateChat = async (user1Id, user2Id) => {
   try {
     const chatId = [user1Id, user2Id].sort().join("_");
@@ -54,11 +35,12 @@ export const getOrCreatePrivateChat = async (user1Id, user2Id) => {
 
     return chatId;
   } catch (error) {
-    throw new Error(error.message);
+    console.error("Error creating chat:", error);
+    throw new Error("Missing or insufficient permissions. Please check Firestore Rules.");
   }
 };
 
-// Send message (with notification)
+// Send message
 export const sendMessage = async (chatId, senderId, messageData) => {
   try {
     const messagesRef = collection(db, "chats", chatId, "messages");
@@ -79,33 +61,6 @@ export const sendMessage = async (chatId, senderId, messageData) => {
       lastMessage: messageData.text || "📷 Photo",
       updatedAt: new Date()
     });
-
-    // 🔥 Send notification to the other user
-    try {
-      const chatDoc = await getDoc(doc(db, "chats", chatId));
-      if (chatDoc.exists()) {
-        const participants = chatDoc.data().participants;
-        const otherUserId = participants.find(id => id !== senderId);
-        
-        if (otherUserId) {
-          const otherUserDoc = await getDoc(doc(db, "users", otherUserId));
-          if (otherUserDoc.exists()) {
-            const otherUser = otherUserDoc.data();
-            const senderDoc = await getDoc(doc(db, "users", senderId));
-            const senderName = senderDoc.exists() ? senderDoc.data().displayName : "Someone";
-            
-            const messagePreview = messageData.text || "📷 Image";
-            sendDesktopNotification(
-              `📩 ${senderName}`,
-              messagePreview,
-              otherUser.photoURL || "/logo192.png"
-            );
-          }
-        }
-      }
-    } catch (notifError) {
-      console.error("Notification error:", notifError);
-    }
 
     return messageId;
   } catch (error) {
