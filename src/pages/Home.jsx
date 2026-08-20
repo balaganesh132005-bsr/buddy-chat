@@ -1,11 +1,11 @@
-// src/pages/Home.jsx - With Live Status
+// src/pages/Home.jsx - Real-time Online Status Fix
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
 import { getActiveStories, viewStory, createStory, getUserStories, likeStory } from "../services/storyService";
 import { uploadStoryMedia } from "../services/storageService";
-import { updateLastSeen } from "../services/authService";
+import { updateLastSeen, markUserOffline } from "../services/authService";
 import toast from "react-hot-toast";
 import {
   FiMessageCircle,
@@ -40,13 +40,23 @@ function Home() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
+    let unsubscribeUser = null;
+
     const fetchHomeData = async () => {
       try {
         const currentUser = auth.currentUser;
         if (!currentUser) return;
 
-        // 🔥 Update last seen
+        // 🔥 Update online status when component mounts
         await updateLastSeen(currentUser.uid);
+
+        // 🔥 Real-time listener for user status
+        const userRef = doc(db, "users", currentUser.uid);
+        unsubscribeUser = onSnapshot(userRef, (docSnap) => {
+          if (docSnap.exists()) {
+            setUser({ uid: currentUser.uid, ...docSnap.data() });
+          }
+        });
 
         const userDoc = await getDoc(doc(db, "users", currentUser.uid));
         if (userDoc.exists()) {
@@ -79,6 +89,23 @@ function Home() {
     };
 
     fetchHomeData();
+
+    // 🔥 Handle user leaving the page/tab
+    const handleBeforeUnload = () => {
+      if (auth.currentUser) {
+        markUserOffline(auth.currentUser.uid);
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      // 🔥 Mark offline when component unmounts
+      if (auth.currentUser) {
+        markUserOffline(auth.currentUser.uid);
+      }
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      if (unsubscribeUser) unsubscribeUser();
+    };
   }, []);
 
   const groupStoriesByUser = (storiesList) => {
@@ -225,7 +252,7 @@ function Home() {
   return (
     <div className="home-container">
       <div className="desktop-sidebar">
-        <h2>BuddyChat</h2>
+        <h2>BUDDYCHAT</h2>
         <nav className="desktop-nav">
           <Link to="/" className="desktop-nav-item active">
             <FiHome size={20} /> Home
@@ -246,17 +273,14 @@ function Home() {
             <FiLogOut size={20} /> Logout
           </button>
         </nav>
-        
-        {/* 🔥 USER SECTION WITH LAST SEEN */}
         <div className="sidebar-user">
           {user?.photoURL && <img src={user.photoURL} alt="Profile" />}
           <div>
             <p className="user-name">{user?.displayName}</p>
             <p className="user-handle">@{user?.username}</p>
-            <p className={`user-status ${user?.lastSeen && (new Date() - user.lastSeen.toDate() < 60000) ? 'active' : ''}`}>
-              {user?.lastSeen && 
-                (new Date() - user.lastSeen.toDate() < 60000) 
-                ? 'Active now'
+            <p className={`user-status ${user?.isOnline ? 'active' : ''}`}>
+              {user?.isOnline 
+                ? '● Active now'
                 : `Last seen ${user?.lastSeen?.toDate()?.toLocaleTimeString?.([], { hour: '2-digit', minute: '2-digit' }) || 'recently'}`}
             </p>
           </div>
@@ -265,7 +289,7 @@ function Home() {
 
       <div className="mobile-top-bar">
         <div className="mobile-brand">
-          <h1>BuddyChat</h1>
+          <h1>BUDDYCHAT</h1>
         </div>
         <div className="mobile-nav-icons">
           <Link to="/chats" className="mobile-icon"><FiMessageCircle size={22} /></Link>

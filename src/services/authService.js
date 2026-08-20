@@ -1,4 +1,4 @@
-// src/services/authService.js - Full Code
+// src/services/authService.js - Full Code with Online/Offline
 import {
   signInWithPopup,
   signOut,
@@ -16,7 +16,6 @@ import { auth, db, googleProvider } from "../config/firebase";
 // Sign in with Google - Force Account Picker
 export const googleLogin = async () => {
   try {
-    // 🔥 Force account picker every time
     googleProvider.setCustomParameters({
       prompt: 'select_account'
     });
@@ -82,7 +81,9 @@ export const createUsername = async (uid, username, userData) => {
       photoURL: userData.photoURL || "",
       bio: "",
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      isOnline: true,
+      lastSeen: now
     });
 
     await setDoc(doc(db, "usernames", cleanUsername), {
@@ -111,15 +112,29 @@ export const updateUserProfile = async (uid, updates) => {
   }
 };
 
-// Update last seen
+// 🔥 Update Last Seen (Online)
 export const updateLastSeen = async (uid) => {
   try {
     const userRef = doc(db, "users", uid);
     await updateDoc(userRef, {
-      lastSeen: new Date()
+      lastSeen: new Date(),
+      isOnline: true
     });
   } catch (error) {
     console.error("Error updating last seen:", error);
+  }
+};
+
+// 🔥 Mark user as offline
+export const markUserOffline = async (uid) => {
+  try {
+    const userRef = doc(db, "users", uid);
+    await updateDoc(userRef, {
+      isOnline: false,
+      lastSeen: new Date()
+    });
+  } catch (error) {
+    console.error("Error marking user offline:", error);
   }
 };
 
