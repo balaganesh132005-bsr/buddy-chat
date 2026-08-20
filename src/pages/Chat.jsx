@@ -1,4 +1,4 @@
-// src/pages/Chat.jsx - Instagram/WhatsApp Style Fixed Layout
+// src/pages/Chat.jsx - visualViewport Fix
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -36,6 +36,30 @@ function Chat() {
         Notification.requestPermission();
       }
     }
+  }, []);
+
+  // 🔥 visualViewport handler (Fix keyboard resize)
+  useEffect(() => {
+    const handleVisualViewport = () => {
+      // Only needed for Android Chrome
+      if (window.visualViewport) {
+        const chatContainer = document.querySelector('.chat-container-modern');
+        if (chatContainer) {
+          chatContainer.style.height = `${window.visualViewport.height}px`;
+        }
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleVisualViewport);
+      handleVisualViewport(); // Initial call
+    }
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleVisualViewport);
+      }
+    };
   }, []);
 
   // Auto-focus input when chat loads
@@ -188,7 +212,7 @@ function Chat() {
   return (
     <div className="chat-container-modern">
       
-      {/* 🔥 FIXED HEADER */}
+      {/* FIXED HEADER */}
       <div className="chat-header-modern">
         <button onClick={() => navigate("/chats")} className="back-btn-modern">
           <FiArrowLeft size={22} />
@@ -218,7 +242,7 @@ function Chat() {
         </button>
       </div>
 
-      {/* 🔥 SCROLLABLE MESSAGES */}
+      {/* SCROLLABLE MESSAGES */}
       <div 
         className="messages-container-modern" 
         ref={messagesContainerRef}
@@ -270,7 +294,7 @@ function Chat() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* 🔥 FIXED INPUT AREA */}
+      {/* FIXED COMPOSER */}
       <div className="input-container-modern">
         <button
           onClick={() => fileInputRef.current?.click()}

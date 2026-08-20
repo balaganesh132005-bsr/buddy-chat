@@ -1,4 +1,4 @@
-/* src/styles/chat.css - WhatsApp/Instagram Fixed Layout */
+/* src/styles/chat.css - WhatsApp/Instagram Fixed Layout (100dvh) */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 
@@ -46,7 +46,9 @@
 .chat-container-modern {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh; /* 🔥 Dynamic viewport height */
+  max-height: 100dvh;
+  overflow: hidden; /* 🔥 Prevent body scroll */
   background:
     radial-gradient(circle at 12% 8%, rgba(255,61,154,0.16), transparent 32%),
     radial-gradient(circle at 88% 20%, rgba(56,224,255,0.14), transparent 32%),
@@ -54,7 +56,7 @@
   font-family: var(--font-body);
 }
 
-/* ===== FIXED HEADER ===== */
+/* ===== FIXED HEADER (Never scrolls) ===== */
 .chat-header-modern {
   display: flex;
   align-items: center;
@@ -63,11 +65,10 @@
   backdrop-filter: blur(14px);
   border-bottom: 3px solid;
   border-image: var(--holo) 1;
-  flex-shrink: 0;
+  flex-shrink: 0; /* 🔥 Prevents shrinking */
   box-shadow: var(--hard-shadow-sm);
   position: relative;
   z-index: 10;
-  height: 70px;
   min-height: 70px;
 }
 
@@ -178,10 +179,11 @@
   transform: rotate(90deg);
 }
 
-/* ===== SCROLLABLE MESSAGES ===== */
+/* ===== SCROLLABLE MESSAGES (Fills remaining space) ===== */
 .messages-container-modern {
-  flex: 1;
-  overflow-y: auto;
+  flex: 1; /* 🔥 Takes all remaining space */
+  min-height: 0;
+  overflow-y: auto; /* 🔥 Only this scrolls */
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -278,7 +280,7 @@
 .message-bubble:hover .delete-btn-modern { display: inline-block; }
 .delete-btn-modern:hover { transform: scale(1.2) rotate(-8deg); }
 
-/* ===== FIXED INPUT AREA ===== */
+/* ===== FIXED INPUT AREA (Never scrolls) ===== */
 .input-container-modern {
   display: flex;
   align-items: center;
@@ -288,7 +290,7 @@
   backdrop-filter: blur(14px);
   border-top: 3px solid;
   border-image: var(--holo) 1;
-  flex-shrink: 0;
+  flex-shrink: 0; /* 🔥 Prevents shrinking */
   min-height: 70px;
 }
 
