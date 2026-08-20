@@ -1,4 +1,4 @@
-// src/pages/CreateUsername.jsx - Error Handling
+// src/pages/CreateUsername.jsx - FIXED VERSION
 import React, { useState, useEffect } from "react";
 import { auth } from "../config/firebase";
 import { checkUsernameAvailability, createUsername } from "../services/authService";
@@ -11,10 +11,43 @@ function CreateUsername() {
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(false);
   const [available, setAvailable] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  // ✅ FIXED: Better input validation
+  const validateUsername = (input) => {
+    const cleanInput = input.trim().toLowerCase();
+
+    // Check length
+    if (cleanInput.length < 3) {
+      setErrorMessage("Minimum 3 characters required");
+      return false;
+    }
+
+    if (cleanInput.length > 20) {
+      setErrorMessage("Maximum 20 characters allowed");
+      return false;
+    }
+
+    // Check if alphanumeric and underscore only
+    if (!/^[a-z0-9_]+$/.test(cleanInput)) {
+      setErrorMessage("Only letters, numbers, and underscore allowed");
+      return false;
+    }
+
+    setErrorMessage("");
+    return true;
+  };
 
   useEffect(() => {
     if (username.length < 3) {
       setAvailable(null);
+      setErrorMessage("");
+      return;
+    }
+
+    // Validate input first
+    if (!validateUsername(username)) {
+      setAvailable(false);
       return;
     }
 
@@ -23,10 +56,15 @@ function CreateUsername() {
       try {
         const isAvailable = await checkUsernameAvailability(username);
         setAvailable(isAvailable);
+        if (!isAvailable) {
+          setErrorMessage("Username already taken");
+        } else {
+          setErrorMessage("");
+        }
       } catch (error) {
         console.error("Error checking username:", error);
-        // If Firebase error, treat as unavailable to prevent issues
         setAvailable(false);
+        setErrorMessage("Error checking availability");
       }
       setChecking(false);
     };
@@ -73,13 +111,21 @@ function CreateUsername() {
         window.location.href = "/";
       }, 800);
     } catch (error) {
+      console.error("Error creating username:", error);
       toast.error(error.message || "Failed to create username");
+      
+      // ✅ FIXED: If error is "no longer available", refresh check
+      if (error.message.includes("no longer available")) {
+        setAvailable(false);
+        setErrorMessage("Username was taken by someone else");
+      }
+      
       setLoading(false);
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === "Enter" && available && !loading) {
+    if (e.key === "Enter" && available && !loading && !checking) {
       handleCreateUsername();
     }
   };
@@ -103,6 +149,7 @@ function CreateUsername() {
               className="username-input"
               disabled={loading}
               minLength={3}
+              maxLength={20}
             />
 
             <div className="username-status">
@@ -110,13 +157,18 @@ function CreateUsername() {
               {!checking && available === true && (
                 <FiCheck size={20} className="available" />
               )}
-              {!checking && available === false && (
+              {!checking && available === false && username.length >= 3 && (
                 <FiX size={20} className="unavailable" />
               )}
             </div>
           </div>
 
-          {available !== null && (
+          {/* ✅ FIXED: Better error/status messages */}
+          {errorMessage && (
+            <p className="unavailable-text">✗ {errorMessage}</p>
+          )}
+
+          {available !== null && !errorMessage && (
             <p className={available ? "available-text" : "unavailable-text"}>
               {available ? "✓ Username available" : "✗ Username taken"}
             </p>
@@ -124,14 +176,14 @@ function CreateUsername() {
 
           <button
             onClick={handleCreateUsername}
-            disabled={loading || !available || username.length < 3}
+            disabled={loading || !available || username.length < 3 || checking}
             className="auth-submit-btn"
           >
-            {loading ? "Creating..." : "Create Username"}
+            {loading ? "Creating..." : checking ? "Checking..." : "Create Username"}
           </button>
 
           <p className="auth-footer">
-            Username must be 3-20 characters, alphanumeric only
+            3-20 characters • Letters, numbers, underscore only
           </p>
         </div>
       </div>
