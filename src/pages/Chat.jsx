@@ -1,4 +1,4 @@
-// src/pages/Chat.jsx - Center Header Layout
+// src/pages/Chat.jsx - Instagram Style Header
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -25,7 +25,7 @@ function Chat() {
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // 🔥 Request notification permission on mount
+  // Request notification permission on mount
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
       if (Notification.permission !== "granted" && Notification.permission !== "denied") {
@@ -149,7 +149,7 @@ function Chat() {
 
   return (
     <div className="chat-container-modern">
-      {/* Header - Centered Layout */}
+      {/* 🔥 INSTAGRAM STYLE HEADER */}
       <div className="chat-header-modern">
         <button onClick={() => navigate("/chats")} className="back-btn-modern">
           <FiArrowLeft size={22} />
@@ -157,13 +157,13 @@ function Chat() {
         <div className="chat-user-info-modern">
           <div className="user-avatar-wrapper">
             <img
-              src={otherUser?.photoURL || "https://via.placeholder.com/40"}
+              src={otherUser?.photoURL || "https://via.placeholder.com/36"}
               alt={otherUser?.displayName}
               className="user-avatar-modern"
             />
             <span className="online-indicator"></span>
           </div>
-          <div>
+          <div className="user-text-info">
             <p className="chat-user-name-modern">{otherUser?.displayName}</p>
             <p className="chat-user-handle-modern">@{otherUser?.username}</p>
             <p className="chat-user-status">
