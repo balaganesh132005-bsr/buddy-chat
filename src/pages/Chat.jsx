@@ -1,4 +1,4 @@
-// src/pages/Chat.jsx - Instagram Style Header
+// src/pages/Chat.jsx - Auto Scroll + Keyboard Fix
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -23,9 +23,12 @@ function Chat() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Request notification permission on mount
+  const [isNearBottom, setIsNearBottom] = useState(true);
+
+  // 🔥 Request notification permission on mount
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
       if (Notification.permission !== "granted" && Notification.permission !== "denied") {
@@ -94,9 +97,38 @@ function Chat() {
     return () => unsubscribe?.();
   }, [chatId]);
 
+  // 🔥 Auto-scroll logic
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (messages.length === 0) return;
+
+    // Scroll to bottom if user is near bottom
+    if (isNearBottom) {
+      scrollToBottom();
+    }
+  }, [messages, isNearBottom]);
+
+  // 🔥 Detect scroll position
+  const handleScroll = () => {
+    if (!messagesContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const threshold = 100; // px from bottom
+    const isBottom = scrollHeight - scrollTop - clientHeight < threshold;
+    setIsNearBottom(isBottom);
+  };
+
+  // 🔥 Smooth scroll to bottom
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  };
+
+  // 🔥 Keyboard handling: scroll to bottom when input focused (mobile)
+  const handleInputFocus = () => {
+    setTimeout(() => {
+      scrollToBottom();
+    }, 300);
+  };
 
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
@@ -108,6 +140,8 @@ function Chat() {
         text: inputValue
       });
       setInputValue("");
+      // Ensure scroll to bottom after sending
+      setTimeout(() => scrollToBottom(), 150);
     } catch (error) {
       toast.error("Failed to send message");
     } finally {
@@ -149,7 +183,7 @@ function Chat() {
 
   return (
     <div className="chat-container-modern">
-      {/* 🔥 INSTAGRAM STYLE HEADER */}
+      {/* Header */}
       <div className="chat-header-modern">
         <button onClick={() => navigate("/chats")} className="back-btn-modern">
           <FiArrowLeft size={22} />
@@ -157,7 +191,7 @@ function Chat() {
         <div className="chat-user-info-modern">
           <div className="user-avatar-wrapper">
             <img
-              src={otherUser?.photoURL || "https://via.placeholder.com/36"}
+              src={otherUser?.photoURL || "https://via.placeholder.com/40"}
               alt={otherUser?.displayName}
               className="user-avatar-modern"
             />
@@ -168,7 +202,7 @@ function Chat() {
             <p className="chat-user-handle-modern">@{otherUser?.username}</p>
             <p className="chat-user-status">
               {otherUser?.lastSeen && 
-                (new Date() - otherUser.lastSeen.toDate() < 60000) 
+                (new Date() - otherUser.lastSeen.toDate() < 30000) 
                 ? <span className="status-active">● Active now</span>
                 : `Last seen ${otherUser?.lastSeen?.toDate()?.toLocaleTimeString?.([], { hour: '2-digit', minute: '2-digit' }) || 'recently'}`}
             </p>
@@ -180,7 +214,11 @@ function Chat() {
       </div>
 
       {/* Messages */}
-      <div className="messages-container-modern">
+      <div 
+        className="messages-container-modern" 
+        ref={messagesContainerRef}
+        onScroll={handleScroll}
+      >
         {messages.length === 0 ? (
           <div className="no-messages-modern">
             <div className="empty-chat-icon">💬</div>
@@ -251,6 +289,7 @@ function Chat() {
           placeholder="Type a message..."
           className="input-modern"
           disabled={sending}
+          onFocus={handleInputFocus} // 🔥 Keyboard scroll fix
         />
         <button
           onClick={handleSendMessage}
