@@ -1,8 +1,8 @@
-// src/pages/Home.jsx - Real-time Online Status Fix
+// src/pages/Home.jsx - Heartbeat System (Real-time Online Status)
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { getActiveStories, viewStory, createStory, getUserStories, likeStory } from "../services/storyService";
 import { uploadStoryMedia } from "../services/storageService";
 import { updateLastSeen, markUserOffline } from "../services/authService";
@@ -38,25 +38,23 @@ function Home() {
   const progressTimerRef = useRef(null);
 
   const fileInputRef = useRef(null);
+  const heartbeatIntervalRef = useRef(null);
 
   useEffect(() => {
-    let unsubscribeUser = null;
+    let isMounted = true;
 
     const fetchHomeData = async () => {
       try {
         const currentUser = auth.currentUser;
         if (!currentUser) return;
 
-        // 🔥 Update online status when component mounts
+        // 🔥 Heartbeat: Update last seen every 10 seconds
         await updateLastSeen(currentUser.uid);
-
-        // 🔥 Real-time listener for user status
-        const userRef = doc(db, "users", currentUser.uid);
-        unsubscribeUser = onSnapshot(userRef, (docSnap) => {
-          if (docSnap.exists()) {
-            setUser({ uid: currentUser.uid, ...docSnap.data() });
+        heartbeatIntervalRef.current = setInterval(() => {
+          if (auth.currentUser && isMounted) {
+            updateLastSeen(auth.currentUser.uid);
           }
-        });
+        }, 10000); // 10 seconds
 
         const userDoc = await getDoc(doc(db, "users", currentUser.uid));
         if (userDoc.exists()) {
@@ -90,21 +88,26 @@ function Home() {
 
     fetchHomeData();
 
-    // 🔥 Handle user leaving the page/tab
+    // 🔥 Handle tab/browser close
     const handleBeforeUnload = () => {
-      if (auth.currentUser) {
+      if (auth.currentUser && isMounted) {
         markUserOffline(auth.currentUser.uid);
       }
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("pagehide", handleBeforeUnload);
 
     return () => {
-      // 🔥 Mark offline when component unmounts
+      isMounted = false;
+      // 🔥 Stop heartbeat and mark offline
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
       if (auth.currentUser) {
         markUserOffline(auth.currentUser.uid);
       }
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      if (unsubscribeUser) unsubscribeUser();
+      window.removeEventListener("pagehide", handleBeforeUnload);
     };
   }, []);
 
@@ -278,8 +281,9 @@ function Home() {
           <div>
             <p className="user-name">{user?.displayName}</p>
             <p className="user-handle">@{user?.username}</p>
-            <p className={`user-status ${user?.isOnline ? 'active' : ''}`}>
-              {user?.isOnline 
+            {/* 🔥 Real-time Status */}
+            <p className={`user-status ${user?.lastSeen && (new Date() - user.lastSeen.toDate() < 30000) ? 'active' : ''}`}>
+              {user?.lastSeen && (new Date() - user.lastSeen.toDate() < 30000) 
                 ? '● Active now'
                 : `Last seen ${user?.lastSeen?.toDate()?.toLocaleTimeString?.([], { hour: '2-digit', minute: '2-digit' }) || 'recently'}`}
             </p>

@@ -1,4 +1,4 @@
-// src/services/authService.js - Full Code with Online/Offline
+// src/services/authService.js - Full Code with Heartbeat
 import {
   signInWithPopup,
   signOut,
@@ -82,7 +82,6 @@ export const createUsername = async (uid, username, userData) => {
       bio: "",
       createdAt: now,
       updatedAt: now,
-      isOnline: true,
       lastSeen: now
     });
 
@@ -112,13 +111,12 @@ export const updateUserProfile = async (uid, updates) => {
   }
 };
 
-// 🔥 Update Last Seen (Online)
+// 🔥 Heartbeat: Update Last Seen (Online)
 export const updateLastSeen = async (uid) => {
   try {
     const userRef = doc(db, "users", uid);
     await updateDoc(userRef, {
-      lastSeen: new Date(),
-      isOnline: true
+      lastSeen: new Date()
     });
   } catch (error) {
     console.error("Error updating last seen:", error);
@@ -130,7 +128,6 @@ export const markUserOffline = async (uid) => {
   try {
     const userRef = doc(db, "users", uid);
     await updateDoc(userRef, {
-      isOnline: false,
       lastSeen: new Date()
     });
   } catch (error) {
