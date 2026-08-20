@@ -1,4 +1,4 @@
-// src/pages/Chat.jsx - Fixed Chat ID Check
+// src/pages/Chat.jsx - Center Header Layout
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -35,7 +35,6 @@ function Chat() {
   }, []);
 
   useEffect(() => {
-    // 🔥 FIX: Check if chatId exists
     if (!chatId) {
       toast.error("Chat ID missing");
       navigate("/chats");
@@ -150,6 +149,7 @@ function Chat() {
 
   return (
     <div className="chat-container-modern">
+      {/* Header - Centered Layout */}
       <div className="chat-header-modern">
         <button onClick={() => navigate("/chats")} className="back-btn-modern">
           <FiArrowLeft size={22} />
@@ -179,6 +179,7 @@ function Chat() {
         </button>
       </div>
 
+      {/* Messages */}
       <div className="messages-container-modern">
         {messages.length === 0 ? (
           <div className="no-messages-modern">
@@ -226,6 +227,7 @@ function Chat() {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Input */}
       <div className="input-container-modern">
         <button
           onClick={() => fileInputRef.current?.click()}
