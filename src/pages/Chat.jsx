@@ -1,4 +1,4 @@
-// src/pages/Chat.jsx - Instagram/WhatsApp Style (Final Layout)
+// src/pages/Chat.jsx - Instagram/WhatsApp Style Fixed Layout
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -36,29 +36,6 @@ function Chat() {
         Notification.requestPermission();
       }
     }
-  }, []);
-
-  // visualViewport handler (Fix keyboard resize)
-  useEffect(() => {
-    const handleVisualViewport = () => {
-      if (window.visualViewport) {
-        const chatContainer = document.querySelector('.chat-container-modern');
-        if (chatContainer) {
-          chatContainer.style.height = `${window.visualViewport.height}px`;
-        }
-      }
-    };
-
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleVisualViewport);
-      handleVisualViewport();
-    }
-
-    return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleVisualViewport);
-      }
-    };
   }, []);
 
   // Auto-focus input when chat loads
@@ -211,7 +188,7 @@ function Chat() {
   return (
     <div className="chat-container-modern">
       
-      {/* FIXED HEADER (Instagram Style) */}
+      {/* 🔥 FIXED HEADER */}
       <div className="chat-header-modern">
         <button onClick={() => navigate("/chats")} className="back-btn-modern">
           <FiArrowLeft size={22} />
@@ -219,7 +196,7 @@ function Chat() {
         <div className="chat-user-info-modern">
           <div className="user-avatar-wrapper">
             <img
-              src={otherUser?.photoURL || "https://via.placeholder.com/36"}
+              src={otherUser?.photoURL || "https://via.placeholder.com/40"}
               alt={otherUser?.displayName}
               className="user-avatar-modern"
             />
@@ -241,7 +218,7 @@ function Chat() {
         </button>
       </div>
 
-      {/* SCROLLABLE MESSAGES */}
+      {/* 🔥 SCROLLABLE MESSAGES */}
       <div 
         className="messages-container-modern" 
         ref={messagesContainerRef}
@@ -293,7 +270,7 @@ function Chat() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* FIXED COMPOSER (Instagram Style) */}
+      {/* 🔥 FIXED INPUT AREA */}
       <div className="input-container-modern">
         <button
           onClick={() => fileInputRef.current?.click()}
