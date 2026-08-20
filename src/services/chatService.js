@@ -15,7 +15,19 @@ import {
 import { db } from "../config/firebase";
 import toast from "react-hot-toast";
 
-// Get or create private chat - FIXED
+// Notification helper
+const sendDesktopNotification = (title, body, icon = "/logo192.png") => {
+  if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+    new Notification(title, {
+      body,
+      icon,
+      tag: "new-message",
+      requireInteraction: true
+    });
+  }
+};
+
+// Get or create private chat
 export const getOrCreatePrivateChat = async (user1Id, user2Id) => {
   try {
     const chatId = [user1Id, user2Id].sort().join("_");
@@ -35,12 +47,11 @@ export const getOrCreatePrivateChat = async (user1Id, user2Id) => {
 
     return chatId;
   } catch (error) {
-    console.error("Error creating chat:", error);
-    throw new Error("Missing or insufficient permissions. Please check Firestore Rules.");
+    throw new Error(error.message);
   }
 };
 
-// Send message (with notification)
+// Send message with notification
 export const sendMessage = async (chatId, senderId, messageData) => {
   try {
     const messagesRef = collection(db, "chats", chatId, "messages");
@@ -62,7 +73,7 @@ export const sendMessage = async (chatId, senderId, messageData) => {
       updatedAt: new Date()
     });
 
-    // 🔥 Notification logic
+    // 🔥 Send notification
     try {
       const chatDoc = await getDoc(doc(db, "chats", chatId));
       if (chatDoc.exists()) {
@@ -75,15 +86,11 @@ export const sendMessage = async (chatId, senderId, messageData) => {
             const senderDoc = await getDoc(doc(db, "users", senderId));
             const senderName = senderDoc.exists() ? senderDoc.data().displayName : "Someone";
             
-            // Show desktop notification
-            if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
-              new Notification(`📩 ${senderName}`, {
-                body: messageData.text || "📷 Image",
-                icon: otherUserDoc.data().photoURL || "/logo192.png",
-                tag: "new-message",
-                requireInteraction: true
-              });
-            }
+            sendDesktopNotification(
+              `📩 ${senderName}`,
+              messageData.text || "📷 Image",
+              otherUserDoc.data().photoURL || "/logo192.png"
+            );
           }
         }
       }
