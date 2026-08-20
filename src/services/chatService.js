@@ -1,4 +1,4 @@
-// src/services/chatService.js - No Index Required
+// src/services/chatService.js - No Index Required (Fixed Imports)
 import { 
   collection, 
   doc, 
@@ -72,7 +72,6 @@ export const sendMessage = async (chatId, senderId, messageData) => {
       updatedAt: new Date()
     });
 
-    // Send notification to OTHER user
     try {
       const chatDoc = await getDoc(doc(db, "chats", chatId));
       if (chatDoc.exists()) {
@@ -172,7 +171,6 @@ export const getUserChats = async (userId) => {
         if (otherUserId) {
           const otherUserDoc = await getDoc(doc(db, "users", otherUserId));
           if (otherUserDoc.exists()) {
-            // Count unread messages manually using JavaScript
             const messagesRef = collection(db, "chats", chatDoc.id, "messages");
             const messagesSnapshot = await getDocs(messagesRef);
             let unreadCount = 0;
