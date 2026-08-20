@@ -1,4 +1,4 @@
-// src/pages/Login.jsx
+// src/pages/Login.jsx - Force Account Picker
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { googleLogin } from "../services/authService";
@@ -13,10 +13,11 @@ function Login() {
   const handleGoogleLogin = async () => {
     try {
       setLoading(true);
+      
+      // 🔥 Force account picker every time
       const user = await googleLogin();
       
       if (user) {
-        // Check if user has username
         const { checkUserExists } = await import("../services/authService");
         const exists = await checkUserExists(user.uid);
         
