@@ -1,4 +1,4 @@
-// src/pages/Chats.jsx - Clean
+// src/pages/Chats.jsx - Add Error Handling
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -73,12 +73,21 @@ function Chats() {
 
   const handleStartChat = async (targetUserId) => {
     try {
+      // 🔥 Check if target user exists
+      const userRef = doc(db, "users", targetUserId);
+      const userDoc = await getDoc(userRef);
+      if (!userDoc.exists()) {
+        toast.error("User not found");
+        return;
+      }
+
       const chatId = await getOrCreatePrivateChat(auth.currentUser.uid, targetUserId);
       setSearchQuery("");
       setSearchResults([]);
       navigate(`/chat/${chatId}`);
     } catch (error) {
-      toast.error("Failed to start chat");
+      console.error("Chat error:", error);
+      toast.error("Failed to start chat: " + error.message);
     }
   };
 
@@ -100,7 +109,7 @@ function Chats() {
       
       {/* DESKTOP SIDEBAR */}
       <div className="desktop-sidebar">
-        <h2>BuddyChat</h2>
+        <h2>BUDDYCHAT</h2>
         <nav className="desktop-nav">
           <Link to="/" className="desktop-nav-item">
             <FiHome size={20} /> Home
@@ -131,7 +140,7 @@ function Chats() {
       {/* MOBILE TOP BAR */}
       <div className="mobile-top-bar">
         <div className="mobile-brand">
-          <h1>BuddyChat</h1>
+          <h1>BUDDYCHAT</h1>
         </div>
         <div className="mobile-nav-icons">
           <Link to="/" className="mobile-icon"><FiHome size={22} /></Link>
@@ -146,7 +155,7 @@ function Chats() {
       {/* MAIN CONTENT */}
       <div className="main-content-mobile">
         <div className="chats-header">
-          <h2>Chats</h2>
+          <h2>CHATS</h2>
           <button onClick={() => navigate("/groups")} className="chats-create-btn">
             <FiPlus size={20} /> New Group
           </button>
