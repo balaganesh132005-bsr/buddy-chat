@@ -1,4 +1,4 @@
-// src/pages/CreateUsername.jsx
+// src/pages/CreateUsername.jsx - Error Handling
 import React, { useState, useEffect } from "react";
 import { auth } from "../config/firebase";
 import { checkUsernameAvailability, createUsername } from "../services/authService";
@@ -24,7 +24,9 @@ function CreateUsername() {
         const isAvailable = await checkUsernameAvailability(username);
         setAvailable(isAvailable);
       } catch (error) {
-        setAvailable(null);
+        console.error("Error checking username:", error);
+        // If Firebase error, treat as unavailable to prevent issues
+        setAvailable(false);
       }
       setChecking(false);
     };
@@ -54,7 +56,6 @@ function CreateUsername() {
         return;
       }
 
-      // Always ensure displayName has a real value
       const displayName =
         user.displayName && user.displayName.trim() !== ""
           ? user.displayName
@@ -68,7 +69,6 @@ function CreateUsername() {
 
       toast.success("Username created successfully!");
 
-      // Full page reload so App.jsx re-checks auth + username state fresh
       setTimeout(() => {
         window.location.href = "/";
       }, 800);
