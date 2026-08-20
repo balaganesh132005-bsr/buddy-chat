@@ -925,6 +925,7 @@ body {
   margin: 10px 0 0 0;
 }
 
+/* ===== FIX: PROFILE INPUT FIELDS (TEXT VISIBLE) ===== */
 .edit-input,
 .edit-textarea {
   width: 100%;
@@ -934,12 +935,18 @@ body {
   border-radius: 12px;
   font-size: 14px;
   font-family: inherit;
-  background: var(--panel-soft);
-  color: var(--text);
+  background: rgba(255, 255, 255, 0.08) !important; /* Slightly lighter background */
+  color: #000000 !important; /* 🔥 BLACK TEXT FOR USER INPUT */
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.edit-input::placeholder, .edit-textarea::placeholder { color: var(--muted); }
-.edit-input:focus, .edit-textarea:focus {
+
+.edit-input::placeholder,
+.edit-textarea::placeholder {
+  color: #a89dbf !important; /* Light gray placeholder */
+}
+
+.edit-input:focus,
+.edit-textarea:focus {
   outline: none;
   border-color: var(--violet);
   box-shadow: 0 0 0 3px rgba(185, 75, 255, 0.18);
@@ -948,6 +955,17 @@ body {
 .edit-textarea {
   resize: vertical;
   min-height: 80px;
+}
+
+/* ===== FIX: SETTINGS SELECT DROPDOWN ===== */
+.setting-select {
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: 10px;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #000000 !important;
+  font-family: var(--font-body);
 }
 
 .save-btn {
@@ -1106,8 +1124,8 @@ body {
   border: 2px solid var(--line);
   border-radius: 10px;
   font-size: 13px;
-  background: var(--panel-soft);
-  color: var(--text);
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #000000 !important;
   font-family: var(--font-body);
 }
 
