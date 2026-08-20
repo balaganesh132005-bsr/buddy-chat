@@ -1,4 +1,4 @@
-// src/pages/Chat.jsx - Full Chat with Notifications
+// src/pages/Chat.jsx - Fixed Chat ID Check
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -35,6 +35,7 @@ function Chat() {
   }, []);
 
   useEffect(() => {
+    // 🔥 FIX: Check if chatId exists
     if (!chatId) {
       toast.error("Chat ID missing");
       navigate("/chats");
