@@ -1,4 +1,4 @@
-// src/services/chatService.js - Full with Notifications
+// src/services/chatService.js - Fixed Notifications
 import { 
   collection, 
   doc, 
@@ -51,7 +51,7 @@ export const getOrCreatePrivateChat = async (user1Id, user2Id) => {
   }
 };
 
-// Send message with notification
+// Send message
 export const sendMessage = async (chatId, senderId, messageData) => {
   try {
     const messagesRef = collection(db, "chats", chatId, "messages");
@@ -73,7 +73,7 @@ export const sendMessage = async (chatId, senderId, messageData) => {
       updatedAt: new Date()
     });
 
-    // 🔥 Send notification
+    // 🔥 NOTIFICATION: Only send to the OTHER user
     try {
       const chatDoc = await getDoc(doc(db, "chats", chatId));
       if (chatDoc.exists()) {
@@ -86,6 +86,7 @@ export const sendMessage = async (chatId, senderId, messageData) => {
             const senderDoc = await getDoc(doc(db, "users", senderId));
             const senderName = senderDoc.exists() ? senderDoc.data().displayName : "Someone";
             
+            // Send notification only to the other user
             sendDesktopNotification(
               `📩 ${senderName}`,
               messageData.text || "📷 Image",
