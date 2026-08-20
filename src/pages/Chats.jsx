@@ -1,4 +1,4 @@
-// src/pages/Chats.jsx - Full Code with Unread Badges
+// src/pages/Chats.jsx - Fix Search Overlap
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -152,14 +152,16 @@ function Chats() {
           </button>
         </div>
 
-        <div className="chats-search-box">
-          <FiSearch size={20} />
-          <input
-            type="text"
-            placeholder="Search username..."
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-          />
+        <div className="chats-search-box-wrapper">
+          <div className="chats-search-box">
+            <FiSearch size={20} />
+            <input
+              type="text"
+              placeholder="Search username..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+            />
+          </div>
           {searchResults.length > 0 && (
             <div className="search-results">
               {searchResults.map((result) => (
@@ -177,9 +179,9 @@ function Chats() {
         </div>
 
         {groups.length > 0 && (
-          <div className="chats-section">
-            <h3 className="chats-section-title">Groups</h3>
-            <div className="chats-list">
+          <div className="groups-section-chats">
+            <h3 className="section-label">Groups</h3>
+            <div className="groups-chats-list">
               {groups.map((group) => (
                 <div key={group.id} className="chat-item group-item" onClick={() => navigate(`/group/${group.id}`)}>
                   <img src={group.photoURL || "https://via.placeholder.com/50"} alt={group.name} className="group-avatar" />
@@ -194,8 +196,8 @@ function Chats() {
           </div>
         )}
 
-        <div className="chats-section">
-          <h3 className="chats-section-title">Private Chats</h3>
+        <div className="private-chats-section">
+          <h3 className="section-label">Private Chats</h3>
           <div className="chats-list">
             {chats.length === 0 ? (
               <div className="empty-state">
@@ -211,7 +213,6 @@ function Chats() {
                   </div>
                   <div className="chat-right">
                     <span className="chat-time">{chat.updatedAt?.toDate?.()?.toLocaleDateString?.() || ""}</span>
-                    {/* 🔥 RED DOT for unread messages */}
                     {chat.unreadCount > 0 && (
                       <span className="unread-badge">{chat.unreadCount}</span>
                     )}
