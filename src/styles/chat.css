@@ -1,4 +1,4 @@
-/* src/styles/chat.css - Y2K HOLO / MAX GEN-Z VIBE v2 (Black Input Text) */
+/* src/styles/chat.css - WhatsApp/Instagram Fixed Layout */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 
@@ -54,7 +54,7 @@
   font-family: var(--font-body);
 }
 
-/* ===== MODERN HEADER ===== */
+/* ===== FIXED HEADER ===== */
 .chat-header-modern {
   display: flex;
   align-items: center;
@@ -67,6 +67,8 @@
   box-shadow: var(--hard-shadow-sm);
   position: relative;
   z-index: 10;
+  height: 70px;
+  min-height: 70px;
 }
 
 .back-btn-modern {
@@ -176,7 +178,7 @@
   transform: rotate(90deg);
 }
 
-/* ===== MESSAGES AREA ===== */
+/* ===== SCROLLABLE MESSAGES ===== */
 .messages-container-modern {
   flex: 1;
   overflow-y: auto;
@@ -276,7 +278,7 @@
 .message-bubble:hover .delete-btn-modern { display: inline-block; }
 .delete-btn-modern:hover { transform: scale(1.2) rotate(-8deg); }
 
-/* ===== INPUT AREA ===== */
+/* ===== FIXED INPUT AREA ===== */
 .input-container-modern {
   display: flex;
   align-items: center;
@@ -287,6 +289,7 @@
   border-top: 3px solid;
   border-image: var(--holo) 1;
   flex-shrink: 0;
+  min-height: 70px;
 }
 
 .attach-btn-modern {
@@ -306,7 +309,7 @@
   border-color: var(--cyan);
 }
 
-/* 🔥 FIX: Black text for user input */
+/* 🔥 Black text for user input */
 .input-modern {
   flex: 1;
   border: 2px solid var(--line);
@@ -315,9 +318,9 @@
   font-family: var(--font-body);
   font-size: 15px;
   outline: none;
-  background: rgba(255, 255, 255, 0.90); /* Light background for contrast */
-  color: #222222 !important; /* 🔥 Black text for typed content */
-  caret-color: #000000; /* Visible black cursor */
+  background: rgba(255, 255, 255, 0.90);
+  color: #222222 !important;
+  caret-color: #000000;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .input-modern::placeholder {

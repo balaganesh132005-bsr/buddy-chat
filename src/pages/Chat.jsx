@@ -1,4 +1,4 @@
-// src/pages/Chat.jsx - Auto Focus + Keyboard Fix
+// src/pages/Chat.jsx - Instagram/WhatsApp Style Fixed Layout
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -25,11 +25,11 @@ function Chat() {
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
-  const inputRef = useRef(null); // 🔥 Ref for input focus
+  const inputRef = useRef(null);
 
   const [isNearBottom, setIsNearBottom] = useState(true);
 
-  // 🔥 Request notification permission
+  // Request notification permission
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
       if (Notification.permission !== "granted" && Notification.permission !== "denied") {
@@ -38,12 +38,10 @@ function Chat() {
     }
   }, []);
 
-  // 🔥 Auto-focus and open keyboard when chat loads
+  // Auto-focus input when chat loads
   useEffect(() => {
     if (!loading && inputRef.current) {
-      setTimeout(() => {
-        inputRef.current.focus();
-      }, 300);
+      setTimeout(() => inputRef.current.focus(), 300);
     }
   }, [loading]);
 
@@ -146,10 +144,7 @@ function Chat() {
       setInputValue("");
       setTimeout(() => {
         scrollToBottom();
-        // 🔥 Keep input focused after sending
-        if (inputRef.current) {
-          inputRef.current.focus();
-        }
+        if (inputRef.current) inputRef.current.focus();
       }, 150);
     } catch (error) {
       toast.error("Failed to send message");
@@ -192,7 +187,8 @@ function Chat() {
 
   return (
     <div className="chat-container-modern">
-      {/* Header */}
+      
+      {/* 🔥 FIXED HEADER */}
       <div className="chat-header-modern">
         <button onClick={() => navigate("/chats")} className="back-btn-modern">
           <FiArrowLeft size={22} />
@@ -222,7 +218,7 @@ function Chat() {
         </button>
       </div>
 
-      {/* Messages */}
+      {/* 🔥 SCROLLABLE MESSAGES */}
       <div 
         className="messages-container-modern" 
         ref={messagesContainerRef}
@@ -274,7 +270,7 @@ function Chat() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input - With Black Text */}
+      {/* 🔥 FIXED INPUT AREA */}
       <div className="input-container-modern">
         <button
           onClick={() => fileInputRef.current?.click()}
@@ -292,7 +288,7 @@ function Chat() {
         />
         <input
           type="text"
-          ref={inputRef} // 🔥 Ref for focus
+          ref={inputRef}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
