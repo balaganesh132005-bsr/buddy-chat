@@ -37,7 +37,7 @@ function Login() {
     <div className="auth-container">
       <div className="auth-box">
         <div className="auth-header">
-          <h1>SocialChat</h1>
+          <h1>BuddyChat</h1>
           <p>Connect with everyone</p>
         </div>
 
