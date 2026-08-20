@@ -1,4 +1,4 @@
-// src/services/chatService.js - With Unread Logic
+// src/services/chatService.js - No Index Required
 import { 
   collection, 
   doc, 
@@ -7,7 +7,6 @@ import {
   getDocs,
   query, 
   where, 
-  orderBy,
   onSnapshot,
   updateDoc,
   arrayUnion
@@ -73,20 +72,17 @@ export const sendMessage = async (chatId, senderId, messageData) => {
       updatedAt: new Date()
     });
 
-    // 🔥 Send notification to the OTHER user
+    // Send notification to OTHER user
     try {
       const chatDoc = await getDoc(doc(db, "chats", chatId));
       if (chatDoc.exists()) {
         const participants = chatDoc.data().participants;
         const otherUserId = participants.find(id => id !== senderId);
-        
         if (otherUserId) {
           const otherUserDoc = await getDoc(doc(db, "users", otherUserId));
           if (otherUserDoc.exists()) {
             const senderDoc = await getDoc(doc(db, "users", senderId));
             const senderName = senderDoc.exists() ? senderDoc.data().displayName : "Someone";
-            
-            // Send notification
             sendDesktopNotification(
               `📩 ${senderName}`,
               messageData.text || "📷 Image",
@@ -158,7 +154,7 @@ export const deleteMessage = async (chatId, messageId) => {
   }
 };
 
-// Get user chats with unread count
+// 🔥 FIX: Get user chats - No Index Required
 export const getUserChats = async (userId) => {
   try {
     const q = query(
@@ -176,15 +172,16 @@ export const getUserChats = async (userId) => {
         if (otherUserId) {
           const otherUserDoc = await getDoc(doc(db, "users", otherUserId));
           if (otherUserDoc.exists()) {
-            // 🔥 Calculate unread count
+            // Count unread messages manually using JavaScript
             const messagesRef = collection(db, "chats", chatDoc.id, "messages");
-            const qMessages = query(
-              messagesRef,
-              where("senderId", "!=", userId),
-              where("readBy", "array-contains", userId)
-            );
-            const messagesSnapshot = await getDocs(qMessages);
-            const unreadCount = messagesSnapshot.size;
+            const messagesSnapshot = await getDocs(messagesRef);
+            let unreadCount = 0;
+            messagesSnapshot.forEach((msgDoc) => {
+              const msg = msgDoc.data();
+              if (msg.senderId !== userId && !(msg.readBy || []).includes(userId)) {
+                unreadCount++;
+              }
+            });
 
             chats.push({
               id: chatDoc.id,
@@ -215,33 +212,5 @@ export const getUserChats = async (userId) => {
     console.error("Error fetching user chats:", error);
     toast.error("Chat error: " + error.message);
     return [];
-  }
-};
-
-// Get unread count for chat
-export const getUnreadCount = async (chatId, userId) => {
-  try {
-    const messagesRef = collection(db, "chats", chatId, "messages");
-    const q = query(
-      messagesRef,
-      where("senderId", "!=", userId),
-      orderBy("senderId"),
-      orderBy("timestamp", "desc")
-    );
-
-    const snapshot = await getDocs(q);
-    let unreadCount = 0;
-
-    snapshot.forEach((doc) => {
-      const readBy = doc.data().readBy || [];
-      if (!readBy.includes(userId)) {
-        unreadCount++;
-      }
-    });
-
-    return unreadCount;
-  } catch (error) {
-    console.error("Error getting unread count:", error);
-    return 0;
   }
 };
