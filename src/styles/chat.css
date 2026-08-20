@@ -1,4 +1,4 @@
-/* src/styles/chat.css - Y2K HOLO / MAX GEN-Z VIBE v2 */
+/* src/styles/chat.css - Y2K HOLO / MAX GEN-Z VIBE v2 (Black Input Text) */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 
@@ -306,9 +306,7 @@
   border-color: var(--cyan);
 }
 
-/* 🔥 FIX: typed text was invisible (defaulted to black on dark bg).
-   Text color is now explicitly set to white/light so it's always visible
-   no matter what theme colors change around it. */
+/* 🔥 FIX: Black text for user input */
 .input-modern {
   flex: 1;
   border: 2px solid var(--line);
@@ -317,9 +315,9 @@
   font-family: var(--font-body);
   font-size: 15px;
   outline: none;
-  background: var(--panel-soft);
-  color: #ffffff !important;
-  caret-color: var(--cyan);
+  background: rgba(255, 255, 255, 0.90); /* Light background for contrast */
+  color: #222222 !important; /* 🔥 Black text for typed content */
+  caret-color: #000000; /* Visible black cursor */
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .input-modern::placeholder {
@@ -328,7 +326,7 @@
 }
 .input-modern:focus {
   border-color: var(--violet);
-  background: rgba(185, 75, 255, 0.06);
+  background: #ffffff;
   box-shadow: 0 0 0 3px rgba(185, 75, 255, 0.18);
 }
 

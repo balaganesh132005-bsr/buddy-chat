@@ -1,4 +1,4 @@
-// src/pages/Chat.jsx - Auto Scroll + Keyboard Fix
+// src/pages/Chat.jsx - Auto Focus + Keyboard Fix
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -25,10 +25,11 @@ function Chat() {
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
+  const inputRef = useRef(null); // 🔥 Ref for input focus
 
   const [isNearBottom, setIsNearBottom] = useState(true);
 
-  // 🔥 Request notification permission on mount
+  // 🔥 Request notification permission
   useEffect(() => {
     if (typeof window !== "undefined" && "Notification" in window) {
       if (Notification.permission !== "granted" && Notification.permission !== "denied") {
@@ -36,6 +37,15 @@ function Chat() {
       }
     }
   }, []);
+
+  // 🔥 Auto-focus and open keyboard when chat loads
+  useEffect(() => {
+    if (!loading && inputRef.current) {
+      setTimeout(() => {
+        inputRef.current.focus();
+      }, 300);
+    }
+  }, [loading]);
 
   useEffect(() => {
     if (!chatId) {
@@ -97,33 +107,27 @@ function Chat() {
     return () => unsubscribe?.();
   }, [chatId]);
 
-  // 🔥 Auto-scroll logic
   useEffect(() => {
     if (messages.length === 0) return;
-
-    // Scroll to bottom if user is near bottom
     if (isNearBottom) {
       scrollToBottom();
     }
   }, [messages, isNearBottom]);
 
-  // 🔥 Detect scroll position
   const handleScroll = () => {
     if (!messagesContainerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-    const threshold = 100; // px from bottom
+    const threshold = 100;
     const isBottom = scrollHeight - scrollTop - clientHeight < threshold;
     setIsNearBottom(isBottom);
   };
 
-  // 🔥 Smooth scroll to bottom
   const scrollToBottom = () => {
     setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 100);
   };
 
-  // 🔥 Keyboard handling: scroll to bottom when input focused (mobile)
   const handleInputFocus = () => {
     setTimeout(() => {
       scrollToBottom();
@@ -140,8 +144,13 @@ function Chat() {
         text: inputValue
       });
       setInputValue("");
-      // Ensure scroll to bottom after sending
-      setTimeout(() => scrollToBottom(), 150);
+      setTimeout(() => {
+        scrollToBottom();
+        // 🔥 Keep input focused after sending
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 150);
     } catch (error) {
       toast.error("Failed to send message");
     } finally {
@@ -265,7 +274,7 @@ function Chat() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
+      {/* Input - With Black Text */}
       <div className="input-container-modern">
         <button
           onClick={() => fileInputRef.current?.click()}
@@ -283,13 +292,14 @@ function Chat() {
         />
         <input
           type="text"
+          ref={inputRef} // 🔥 Ref for focus
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
           placeholder="Type a message..."
           className="input-modern"
           disabled={sending}
-          onFocus={handleInputFocus} // 🔥 Keyboard scroll fix
+          onFocus={handleInputFocus}
         />
         <button
           onClick={handleSendMessage}
