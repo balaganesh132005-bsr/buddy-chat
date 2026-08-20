@@ -1,4 +1,4 @@
-// src/pages/Chats.jsx - Fix Search Overlap
+// src/pages/Chats.jsx - Fix Search Dropdown Position
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -152,7 +152,8 @@ function Chats() {
           </button>
         </div>
 
-        <div className="chats-search-box-wrapper">
+        {/* 🔥 SEARCH WRAPPER WITH POSITION RELATIVE */}
+        <div className="chats-search-wrapper">
           <div className="chats-search-box">
             <FiSearch size={20} />
             <input
@@ -162,8 +163,9 @@ function Chats() {
               onChange={(e) => handleSearch(e.target.value)}
             />
           </div>
+          
           {searchResults.length > 0 && (
-            <div className="search-results">
+            <div className="search-results-dropdown">
               {searchResults.map((result) => (
                 <div key={result.uid} className="search-result-item">
                   <img src={result.photoURL || "https://via.placeholder.com/40"} alt={result.displayName} />
