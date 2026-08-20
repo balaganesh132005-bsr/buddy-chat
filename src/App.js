@@ -9,8 +9,8 @@ import { Toaster } from "react-hot-toast";
 import Login from "./pages/Login";
 import CreateUsername from "./pages/CreateUsername";
 import Home from "./pages/Home";
-import Chats from "./pages/Chat";           // 👈 Chats List Page
-import IndividualChat from "./pages/IndividualChat"; // 👈 Individual Chat Page
+import Chats from "./pages/Chats"; // ✅ Chat list page
+import Chat from "./pages/Chat";   // ✅ Individual chat page
 import Stories from "./pages/Stories";
 import Groups from "./pages/Groups";
 import GroupChat from "./pages/GroupChat";
@@ -18,40 +18,6 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 
 import "./App.css";
-
-// Loading Component with Animation
-function LoadingScreen() {
-  return (
-    <div style={{
-      display: "flex",
-      flexDirection: "column",
-      justifyContent: "center",
-      alignItems: "center",
-      height: "100vh",
-      background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      color: "white"
-    }}>
-      <div style={{
-        width: "60px",
-        height: "60px",
-        border: "6px solid rgba(255, 255, 255, 0.3)",
-        borderTop: "6px solid white",
-        borderRadius: "50%",
-        animation: "spin 1s linear infinite",
-        marginBottom: "20px"
-      }}></div>
-      <h2 style={{ fontSize: "24px", fontWeight: "600" }}>BuddyChat</h2>
-      <p style={{ fontSize: "14px", opacity: "0.8" }}>Loading...</p>
-      
-      <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
-    </div>
-  );
-}
 
 function App() {
   const [user, setUser] = useState(null);
@@ -88,13 +54,25 @@ function App() {
   }, []);
 
   if (loading) {
-    return <LoadingScreen />;
+    return (
+      <div style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+        fontSize: "18px",
+        color: "#667eea"
+      }}>
+        Loading...
+      </div>
+    );
   }
 
   return (
     <BrowserRouter>
       <Toaster position="top-right" />
       <Routes>
+        {/* Not logged in -> Login page */}
         {!user && (
           <>
             <Route path="/login" element={<Login />} />
@@ -102,6 +80,7 @@ function App() {
           </>
         )}
 
+        {/* Logged in but no username -> Create Username */}
         {user && !hasUsername && (
           <>
             <Route path="/create-username" element={<CreateUsername />} />
@@ -109,15 +88,16 @@ function App() {
           </>
         )}
 
+        {/* Logged in with username -> Full app */}
         {user && hasUsername && (
           <>
             <Route path="/" element={<Home />} />
             
-            {/* 👇 Chats List Page */}
+            {/* ✅ CHATS LIST PAGE */}
             <Route path="/chats" element={<Chats />} />
             
-            {/* 👇 Individual Chat Page - இதான் உங்க கேட்ட 2 வரிகள் */}
-            <Route path="/chat/:chatId" element={<IndividualChat />} />
+            {/* ✅ INDIVIDUAL CHAT PAGE */}
+            <Route path="/chat/:chatId" element={<Chat />} />
             
             <Route path="/stories" element={<Stories />} />
             <Route path="/groups" element={<Groups />} />
