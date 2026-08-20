@@ -1,4 +1,4 @@
-/* src/styles/groups.css - Y2K HOLO / MAX GEN-Z VIBE v2 (Groups + Search) */
+/* src/styles/groups.css - Y2K HOLO / MAX GEN-Z VIBE v2 (Mobile Search Fix) */
 
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 
@@ -305,7 +305,7 @@
   gap: 12px;
   padding: 10px 14px;
   margin-top: 10px;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.05); /* 🔥 Dark background instead of white */
   border: 2px solid var(--line);
   border-radius: 14px;
   cursor: pointer;
