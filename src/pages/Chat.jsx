@@ -1,4 +1,12 @@
-// src/pages/Chats.jsx - Add Error Handling
+// Add this inside Chat() function, before useEffect
+useEffect(() => {
+  // Ask notification permission
+  if (typeof window !== "undefined" && "Notification" in window) {
+    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+      Notification.requestPermission();
+    }
+  }
+}, []);// src/pages/Chats.jsx - Add Error Handling
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";

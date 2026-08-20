@@ -1,4 +1,4 @@
-// src/services/chatService.js - Fix Permissions
+// src/services/chatService.js - Full with Notifications
 import { 
   collection, 
   doc, 
@@ -40,7 +40,7 @@ export const getOrCreatePrivateChat = async (user1Id, user2Id) => {
   }
 };
 
-// Send message
+// Send message (with notification)
 export const sendMessage = async (chatId, senderId, messageData) => {
   try {
     const messagesRef = collection(db, "chats", chatId, "messages");
@@ -61,6 +61,35 @@ export const sendMessage = async (chatId, senderId, messageData) => {
       lastMessage: messageData.text || "📷 Photo",
       updatedAt: new Date()
     });
+
+    // 🔥 Notification logic
+    try {
+      const chatDoc = await getDoc(doc(db, "chats", chatId));
+      if (chatDoc.exists()) {
+        const participants = chatDoc.data().participants;
+        const otherUserId = participants.find(id => id !== senderId);
+        
+        if (otherUserId) {
+          const otherUserDoc = await getDoc(doc(db, "users", otherUserId));
+          if (otherUserDoc.exists()) {
+            const senderDoc = await getDoc(doc(db, "users", senderId));
+            const senderName = senderDoc.exists() ? senderDoc.data().displayName : "Someone";
+            
+            // Show desktop notification
+            if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
+              new Notification(`📩 ${senderName}`, {
+                body: messageData.text || "📷 Image",
+                icon: otherUserDoc.data().photoURL || "/logo192.png",
+                tag: "new-message",
+                requireInteraction: true
+              });
+            }
+          }
+        }
+      }
+    } catch (notifError) {
+      console.error("Notification error:", notifError);
+    }
 
     return messageId;
   } catch (error) {
