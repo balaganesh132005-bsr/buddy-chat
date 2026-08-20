@@ -1,4 +1,4 @@
-// src/services/chatService.js - Fixed Notifications
+// src/services/chatService.js - With Unread Logic
 import { 
   collection, 
   doc, 
@@ -73,7 +73,7 @@ export const sendMessage = async (chatId, senderId, messageData) => {
       updatedAt: new Date()
     });
 
-    // 🔥 NOTIFICATION: Only send to the OTHER user
+    // 🔥 Send notification to the OTHER user
     try {
       const chatDoc = await getDoc(doc(db, "chats", chatId));
       if (chatDoc.exists()) {
@@ -86,7 +86,7 @@ export const sendMessage = async (chatId, senderId, messageData) => {
             const senderDoc = await getDoc(doc(db, "users", senderId));
             const senderName = senderDoc.exists() ? senderDoc.data().displayName : "Someone";
             
-            // Send notification only to the other user
+            // Send notification
             sendDesktopNotification(
               `📩 ${senderName}`,
               messageData.text || "📷 Image",
@@ -158,7 +158,7 @@ export const deleteMessage = async (chatId, messageId) => {
   }
 };
 
-// Get user chats
+// Get user chats with unread count
 export const getUserChats = async (userId) => {
   try {
     const q = query(
@@ -176,10 +176,21 @@ export const getUserChats = async (userId) => {
         if (otherUserId) {
           const otherUserDoc = await getDoc(doc(db, "users", otherUserId));
           if (otherUserDoc.exists()) {
+            // 🔥 Calculate unread count
+            const messagesRef = collection(db, "chats", chatDoc.id, "messages");
+            const qMessages = query(
+              messagesRef,
+              where("senderId", "!=", userId),
+              where("readBy", "array-contains", userId)
+            );
+            const messagesSnapshot = await getDocs(qMessages);
+            const unreadCount = messagesSnapshot.size;
+
             chats.push({
               id: chatDoc.id,
               ...data,
-              otherUser: otherUserDoc.data() || {}
+              otherUser: otherUserDoc.data() || {},
+              unreadCount: unreadCount
             });
           } else {
             console.warn("Other user document not found:", otherUserId);

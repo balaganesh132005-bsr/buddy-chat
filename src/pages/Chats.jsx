@@ -1,4 +1,4 @@
-// src/pages/Chats.jsx - Chats List Page
+// src/pages/Chats.jsx - Full Code with Unread Badges
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -209,7 +209,13 @@ function Chats() {
                     <p className="chat-name">{chat.otherUser?.displayName || "Unknown"}</p>
                     <p className="chat-preview">{chat.lastMessage || "Start a chat..."}</p>
                   </div>
-                  <span className="chat-time">{chat.updatedAt?.toDate?.()?.toLocaleDateString?.() || ""}</span>
+                  <div className="chat-right">
+                    <span className="chat-time">{chat.updatedAt?.toDate?.()?.toLocaleDateString?.() || ""}</span>
+                    {/* 🔥 RED DOT for unread messages */}
+                    {chat.unreadCount > 0 && (
+                      <span className="unread-badge">{chat.unreadCount}</span>
+                    )}
+                  </div>
                 </Link>
               ))
             )}

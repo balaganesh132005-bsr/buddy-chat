@@ -1061,3 +1061,23 @@ body::after {
     transition-duration: 0.001ms !important;
   }
 }
+/* Add to the end of home.css */
+
+/* 🔥 Unread Badge */
+.chat-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.unread-badge {
+  background: #ff3d9a;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 12px;
+  min-width: 20px;
+  text-align: center;
+}
