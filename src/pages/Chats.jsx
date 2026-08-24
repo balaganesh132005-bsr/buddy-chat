@@ -1,12 +1,18 @@
-// src/pages/Chats.jsx - Fix Search Dropdown Position
+// src/pages/Chats.jsx - Real-time chat list (no refresh needed)
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
-import { getUserChats } from "../services/chatService";
 import { getUserGroups } from "../services/groupService";
 import { searchUserByUsername } from "../services/authService";
 import { getOrCreatePrivateChat } from "../services/chatService";
-import { doc, getDoc } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  onSnapshot
+} from "firebase/firestore";
 import toast from "react-hot-toast";
 import {
   FiSearch,
@@ -29,38 +35,96 @@ function Chats() {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Load current user + groups (one-time), and start REAL-TIME chat listener
   useEffect(() => {
-    const fetchChatsAndGroups = async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+
+    let isMounted = true;
+
+    const loadUserAndGroups = async () => {
       try {
-        const currentUser = auth.currentUser;
-        if (!currentUser) return;
-
         const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-        setUser({ uid: currentUser.uid, ...userDoc.data() });
-
-        const userChats = await getUserChats(currentUser.uid);
-        setChats(userChats);
+        if (isMounted && userDoc.exists()) {
+          setUser({ uid: currentUser.uid, ...userDoc.data() });
+        }
 
         const userGroups = await getUserGroups(currentUser.uid);
-        setGroups(userGroups);
+        if (isMounted) setGroups(userGroups);
       } catch (error) {
-        toast.error("Failed to load chats");
-      } finally {
-        setLoading(false);
+        console.error("Error loading user/groups:", error);
       }
     };
 
-    fetchChatsAndGroups();
+    loadUserAndGroups();
+
+    // 🔥 REAL-TIME LISTENER — fires automatically whenever a chat updates
+    // (new message, new chat created, etc.) — no refresh needed!
+    const chatsQuery = query(
+      collection(db, "chats"),
+      where("participants", "array-contains", currentUser.uid)
+    );
+
+    const unsubscribe = onSnapshot(chatsQuery, async (snapshot) => {
+      try {
+        const chatPromises = snapshot.docs.map(async (chatDoc) => {
+          const chatData = chatDoc.data();
+          const otherUserId = chatData.participants.find(
+            (id) => id !== currentUser.uid
+          );
+
+          let otherUser = null;
+          if (otherUserId) {
+            const otherUserDoc = await getDoc(doc(db, "users", otherUserId));
+            if (otherUserDoc.exists()) {
+              otherUser = { uid: otherUserId, ...otherUserDoc.data() };
+            }
+          }
+
+          return {
+            id: chatDoc.id,
+            ...chatData,
+            otherUser
+          };
+        });
+
+        const resolvedChats = await Promise.all(chatPromises);
+
+        // Sort newest first (in JS, no Firestore index needed)
+        resolvedChats.sort((a, b) => {
+          const aTime = a.updatedAt?.toDate?.() || new Date(0);
+          const bTime = b.updatedAt?.toDate?.() || new Date(0);
+          return bTime - aTime;
+        });
+
+        if (isMounted) {
+          setChats(resolvedChats);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Error processing chats snapshot:", error);
+        if (isMounted) setLoading(false);
+      }
+    }, (error) => {
+      console.error("Chats listener error:", error);
+      toast.error("Failed to load chats");
+      if (isMounted) setLoading(false);
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
-  const handleSearch = async (query) => {
-    setSearchQuery(query);
-    if (!query.trim()) {
+  const handleSearch = async (queryText) => {
+    setSearchQuery(queryText);
+    if (!queryText.trim()) {
       setSearchResults([]);
       return;
     }
     try {
-      const foundUser = await searchUserByUsername(query);
+      const foundUser = await searchUserByUsername(queryText);
       if (foundUser && foundUser.uid !== auth.currentUser.uid) {
         setSearchResults([foundUser]);
       } else {
