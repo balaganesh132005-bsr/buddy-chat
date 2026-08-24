@@ -6,7 +6,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { getActiveStories, viewStory, createStory, getUserStories, likeStory } from "../services/storyService";
 import { uploadStoryMedia } from "../services/storageService";
 import { updateLastSeen, markUserOffline } from "../services/authService";
-import { requestNotificationPermission } from "../services/notificationService";
+import { requestNotificationPermission, listenForForegroundMessages } from "../services/notificationService";
 import toast from "react-hot-toast";
 import {
   FiMessageCircle,
@@ -64,6 +64,38 @@ function Home() {
 
         // 🔔 Ask for push notification permission + save FCM token
         requestNotificationPermission(currentUser.uid);
+
+        // 🔔 Show a toast banner when a message arrives WHILE the app is open
+        listenForForegroundMessages((payload) => {
+          const title = payload.notification?.title || "New message";
+          const body = payload.notification?.body || "";
+          const chatId = payload.data?.chatId;
+
+          toast.custom(
+            (t) => (
+              <div
+                onClick={() => {
+                  if (chatId) navigate(`/chat/${chatId}`);
+                  toast.dismiss(t.id);
+                }}
+                style={{
+                  background: "#1e1e2f",
+                  color: "#fff",
+                  padding: "12px 16px",
+                  borderRadius: "12px",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+                  cursor: "pointer",
+                  maxWidth: "320px",
+                  border: "1px solid rgba(255,255,255,0.1)"
+                }}
+              >
+                <p style={{ margin: 0, fontWeight: 700, fontSize: 14 }}>{title}</p>
+                <p style={{ margin: "4px 0 0", fontSize: 13, opacity: 0.85 }}>{body}</p>
+              </div>
+            ),
+            { duration: 5000, position: "top-right" }
+          );
+        });
 
         let fetchedStories = [];
         try {
