@@ -1332,3 +1332,61 @@ body::after {
     margin-top: 2px;
   }
 }
+/* ADD THIS TO THE END OF src/styles/home.css */
+/* Fixes: long last-message text pushing the date/time out of alignment */
+
+.chat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.chat-item .chat-info {
+  flex: 1;
+  min-width: 0; /* REQUIRED for text-overflow to work inside a flex child */
+  overflow: hidden;
+}
+
+.chat-item .chat-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+.chat-item .chat-preview {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 4px 0 0;
+  max-width: 100%;
+  opacity: 0.7;
+  font-size: 13px;
+}
+
+.chat-item .chat-right,
+.chat-item .chat-time {
+  flex-shrink: 0; /* Time never gets squeezed or pushed away */
+  white-space: nowrap;
+  font-size: 12px;
+  text-align: right;
+}
+
+.chat-item .chat-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.chat-item .unread-badge {
+  background: #667eea;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  min-width: 18px;
+  text-align: center;
+}

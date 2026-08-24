@@ -66,10 +66,16 @@ function Home() {
         requestNotificationPermission(currentUser.uid);
 
         // 🔔 Show a toast banner when a message arrives WHILE the app is open
+        // (but SKIP it if the user is already inside that exact chat)
         listenForForegroundMessages((payload) => {
           const title = payload.notification?.title || "New message";
           const body = payload.notification?.body || "";
           const chatId = payload.data?.chatId;
+
+          const currentPath = window.location.pathname;
+          if (chatId && currentPath === `/chat/${chatId}`) {
+            return; // Already looking at this chat — no banner needed
+          }
 
           toast.custom(
             (t) => (
@@ -458,4 +464,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default Home;  
