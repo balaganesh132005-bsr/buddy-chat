@@ -1,4 +1,4 @@
-// src/pages/Chat.jsx - Instagram/WhatsApp Style Fixed Layout
+// src/pages/Chat.jsx - Instagram/WhatsApp Style Fixed Layout + Push Notifications
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -10,6 +10,7 @@ import {
   markMessageAsRead
 } from "../services/chatService";
 import { uploadChatImage } from "../services/storageService";
+import { sendPushNotification } from "../services/notificationService";
 import toast from "react-hot-toast";
 import { FiArrowLeft, FiImage, FiSend, FiTrash2, FiMoreVertical } from "react-icons/fi";
 import "../styles/chat.css";
@@ -135,17 +136,29 @@ function Chat() {
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return;
 
+    const messageText = inputValue;
+
     try {
       setSending(true);
       await sendMessage(chatId, auth.currentUser.uid, {
         type: "text",
-        text: inputValue
+        text: messageText
       });
       setInputValue("");
       setTimeout(() => {
         scrollToBottom();
         if (inputRef.current) inputRef.current.focus();
       }, 150);
+
+      // 🔔 Notify the other person (fails silently if they have no token)
+      if (otherUser?.fcmToken) {
+        sendPushNotification(
+          otherUser.fcmToken,
+          auth.currentUser.displayName || "New message",
+          messageText,
+          { chatId }
+        );
+      }
     } catch (error) {
       toast.error("Failed to send message");
     } finally {
@@ -165,6 +178,16 @@ function Chat() {
         mediaURL
       });
       fileInputRef.current.value = "";
+
+      // 🔔 Notify the other person about the photo
+      if (otherUser?.fcmToken) {
+        sendPushNotification(
+          otherUser.fcmToken,
+          auth.currentUser.displayName || "New message",
+          "📷 Sent a photo",
+          { chatId }
+        );
+      }
     } catch (error) {
       toast.error("Failed to upload image");
     } finally {

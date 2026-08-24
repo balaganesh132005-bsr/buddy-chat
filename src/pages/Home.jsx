@@ -1,4 +1,4 @@
-// src/pages/Home.jsx - Heartbeat System (Real-time Online Status)
+// src/pages/Home.jsx - Heartbeat System (Real-time Online Status) + Push Notifications
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { auth, db } from "../config/firebase";
@@ -6,6 +6,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { getActiveStories, viewStory, createStory, getUserStories, likeStory } from "../services/storyService";
 import { uploadStoryMedia } from "../services/storageService";
 import { updateLastSeen, markUserOffline } from "../services/authService";
+import { requestNotificationPermission } from "../services/notificationService";
 import toast from "react-hot-toast";
 import {
   FiMessageCircle,
@@ -60,6 +61,9 @@ function Home() {
         if (userDoc.exists()) {
           setUser({ uid: currentUser.uid, ...userDoc.data() });
         }
+
+        // 🔔 Ask for push notification permission + save FCM token
+        requestNotificationPermission(currentUser.uid);
 
         let fetchedStories = [];
         try {
