@@ -1,7 +1,8 @@
 // src/services/notificationService.js
+import { getApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import { doc, updateDoc } from "firebase/firestore";
-import { app, db } from "../config/firebase";
+import { db } from "../config/firebase";
 
 const VAPID_KEY = "BEuOWFT65i33yWVEZvuGEE5wUwRU8yn2KmEmIyQgh3Q3IGqi6aIY9qaQIj8L3RzU3OCQKskhioYmQY8w_Qw6Reo";
 
@@ -17,7 +18,7 @@ export const requestNotificationPermission = async (userId) => {
       return null;
     }
 
-    const messaging = getMessaging(app);
+    const messaging = getMessaging(getApp());
     const token = await getToken(messaging, { vapidKey: VAPID_KEY });
 
     if (token && userId) {
@@ -36,7 +37,7 @@ export const requestNotificationPermission = async (userId) => {
 // Listen for notifications while app is OPEN (foreground)
 export const listenForForegroundMessages = (callback) => {
   try {
-    const messaging = getMessaging(app);
+    const messaging = getMessaging(getApp());
     onMessage(messaging, (payload) => {
       callback(payload);
     });
