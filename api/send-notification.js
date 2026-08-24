@@ -1,13 +1,15 @@
 // api/send-notification.js
-// This runs on Vercel's servers (FREE), NOT Firebase Cloud Functions.
-import admin from "firebase-admin";
+import { initializeApp, getApps, cert } from "firebase-admin/app";
+import { getMessaging } from "firebase-admin/messaging";
 
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
+if (!getApps().length) {
+  initializeApp({
+    credential: cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
+      privateKey: process.env.FIREBASE_PRIVATE_KEY
+        ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
+        : undefined
     })
   });
 }
@@ -24,7 +26,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "Missing required fields (token, title, body)" });
     }
 
-    await admin.messaging().send({
+    const messaging = getMessaging();
+
+    await messaging.send({
       token,
       notification: { title, body },
       data: data && data.chatId ? { chatId: String(data.chatId) } : {},
